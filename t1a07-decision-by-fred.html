@@ -1,23 +1,85 @@
-Version 0.0.1.
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Decision Making</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+    }
+    #myDiv01 {
+      margin-top: 15px;
+      padding: 10px;
+      border: 1px solid #ccc;
+      width: 300px;
+    }
+  </style>
+</head>
+<body>
+  <h2 align="center">t1a07-decision-by-fred.html</h2>
 
-<h2 align=center>t1a07-decision-by-fred.html</h2>
+  <p>
+    <a href="https://www.w3schools.com/js/js_if_else.asp">
+      Good reference to Decisions if ... else statements
+    </a>
+  </p>
 
-<a href="https://www.w3schools.com/js/js_if_else.asp">Good reference to Decisions if ... else statements
-  Javascript innerHTML value by fred</a><br>
-Note: ! = Not, && = AND, || = OR
+  <p>Note: ! = Not, && = AND, || = OR</p>
 
-<h4> Example input output code</h4>
-<pre>
-  let myHour = 20
-  if (myHour < 18) {let myGreeting = 'Good day';}
-</pre>
+  <h4>Example input/output code</h4>
+  <pre>
+let myHour = 20;
+if (myHour < 18) {
+  let myGreeting = "Good day";
+}
+  </pre>
 
-<h4> Example working code</h4>
+  <h4>Example working code</h4>
 
-<input id="myNum01" type=number value="4" ><br>
+  <label for="myNum01">Enter a number:</label>
+  <input id="myNum01" type="number" value="4"><br><br>
 
-<input type=button value="Simple if Statement for Decision making" onclick="{let myIn01 = parseFloat(document.getElementById('myNum01').value) if (myIn01 >=3){document.getElementById('myDiv01').innerHTML = myIn01 + ' is greater than 3'} else {document.getElementById('myDiv01').innerHTML = myIn01 + ' is less than 3'}}">
+  <button id="simpleIfBtn">Simple if statement</button>
+  <button id="complexIfBtn">Complex if</button>
 
-<input type=button value="Complex if" onclick="{let myIn01 = parseFloat(document.getElementById('myNum01').value) if (myIn01 != 3 || myIn01 > -3)  && myIn01 <=100 ){document.getElementById('myDiv01').innerHTML = myIn01 + ' is complex'} else {document.getElementById('myDiv01').innerHTML = myIn01 + ' is not complex'}}">
+  <div id="myDiv01">...</div>
 
-<div id="myDiv01">...</div>
+  <script>
+    const numInput = document.getElementById("myNum01");
+    const output = document.getElementById("myDiv01");
+
+    document.getElementById("simpleIfBtn").addEventListener("click", function () {
+      const myIn01 = parseFloat(numInput.value);
+
+      if (isNaN(myIn01)) {
+        output.textContent = "Please enter a valid number.";
+        return;
+      }
+
+      if (myIn01 >= 3) {
+        output.textContent = "The number is greater than or equal to 3.";
+      } else {
+        output.textContent = "The number is less than 3.";
+      }
+    });
+
+    document.getElementById("complexIfBtn").addEventListener("click", function () {
+      const myIn01 = parseFloat(numInput.value);
+
+      if (isNaN(myIn01)) {
+        output.textContent = "Please enter a valid number.";
+        return;
+      }
+
+      // Simpler and clearer condition:
+      if (myIn01 !== 3 && myIn01 > -3 && myIn01 <= 100) {
+        output.textContent = "The number passes the complex condition.";
+      } else {
+        output.textContent = "The number does not pass the complex condition.";
+      }
+    });
+  </script>
+</body>
+</html>
