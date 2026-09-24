@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>t1a04-css-fred</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+    }
+
+    .italic-text {
+      color: #00ff00;
+      background-color: blue;
+    }
+
+    textarea {
+      background-image: url('myImgNew.jpg');
+      position: relative;
+      left: 0;
+      top: 0;
+      width: 200px;
+      height: 50px;
+    }
+
+    img {
+      width: 200px;
+      border-radius: 200px;
+      display: block;
+    }
+  </style>
+</head>
+<body>
+  <h1 align="center">t1a04-css-fred.html</h1>
+
+  <p><i>This is Italic</i></p>
+
+  <p>
+    <i id="myB1" class="italic-text">
+      This id Italic with CSS background-color and main color
+    </i>
+  </p>
+
+  <input
+    type="button"
+    value="Change"
+    onclick="
+      document.getElementById('myB1').style.color = 'red';
+      document.getElementById('myB1').style.backgroundColor = 'yellow';
+    "
+  ><br><br>
+
+  <textarea aria-label="Sample textarea"></textarea><br>
+
+  <br><br><br><br><br><br><br><br><br><br><br><br>
+
+  <img src="myImage01.jpg" alt="Sample image" width="200">
+</body>
+</html>
