@@ -1,24 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Input Output by Fred</title>
+</head>
+<body>
+  <h2 style="text-align:center;">t3a05 - Input Output by Fred</h2>
 
+  <p>
+    <a href="https://www.w3schools.com/jsref/prop_html_innerhtml.asp" target="_blank">
+      Good reference for JavaScript innerHTML
+    </a>
+  </p>
 
-<h2 aling=center>t3a05-input output by fred.html</h2>
+  <h4>Example input/output code</h4>
+  <pre>
+const myIn01 = Number(document.getElementById("myNum01").value);
+document.getElementById("myDiv01").innerHTML = "Hi";
+  </pre>
 
-<ahref="https://www.w3schools.com/jsref/prop_html_innerhtml.asp">Good reference to input putput
-Javascript innerHTML value by Fred</a>
+  <h4>Example working code</h4>
 
-<h4> Example input output code</h4>
-<pre>
+  <label for="myNum01">Enter a number:</label>
+  <input id="myNum01" type="number" value="4"><br><br>
 
-  myIn01 = document.getElementById('myNum01').value
-  document.getElementById('myDiv01').innerHTML = 'Hi'
+  <button type="button" onclick="squareNumber()">Square it</button>
 
-</pre>
+  <div id="myDiv01" aria-live="polite">...</div>
 
-<h4> Example working code</h4>
+  <script>
+    function squareNumber() {
+      const myIn01 = parseFloat(document.getElementById("myNum01").value);
 
-<input id="myNum01" type=number value="4" ><br>
+      if (isNaN(myIn01)) {
+        document.getElementById("myDiv01").innerHTML = "Please enter a valid number.";
+        return;
+      }
 
-<input type=button value="myEvent squares" onclick="{let myIn01 = parseFloat(document.getElementById('myNum01').value) let myAnswer = myIn01 * myIn01 document.getElemntById('myDiv01').innerHTML = myIn01 + ' squared = ' + myAnswer}"><br>
-
-
-
-<div id="myDiv01">...</div>
+      const myAnswer = myIn01 * myIn01;
+      document.getElementById("myDiv01").innerHTML =
+        "Result: " + myIn01 + " squared = " + myAnswer;
+    }
+  </script>
+</body>
+</html>
