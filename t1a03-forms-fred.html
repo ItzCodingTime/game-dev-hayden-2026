@@ -1,31 +1,39 @@
-<h6>Version 0.0.1.</h6>
+<h6>Version 0.0.2</h6>
 
-<h1 align=center>t1a03-forms-fred.html</h1>
-<h3><font color=green> Proving you can use: Forms 2023</font></h3><br>
+<h1 align="center">t1a03-forms-fred.html</h1>
+<h3><font color="green">Proving you can use: Forms 2023</font></h3>
 
-<form>
+<form action="#" method="post">
+  <label for="firstName">First Name:</label>
+  <input type="text" id="firstName" name="firstName" value="Fred"><br>
 
-  First Name:<input type=text id="myText01" value="Fred"><br>
-  Checkbox: <br>
-  Beef:<input type=checkbox><br>
-  Veegy: <input type=checkbox><br>
-  Radio Buttons:<br>
-   95.4 <input type=radio name="myRad01" value=""><br>
-   101 <input type=radio name="myRad01" value=""><br>
+  <label>Checkbox:</label><br>
+  <label><input type="checkbox" name="beef" value="beef"> Beef</label><br>
+  <label><input type="checkbox" name="veggie" value="veggie"> Veggy</label><br>
 
-  hidden:<input type=hidden ><br>
-  File:<input type=file><br>
-  reset:<input type =reset><br>
-  Submit (advanced)<input type=submit><br>
+  <label>Radio Buttons:</label><br>
+  <label><input type="radio" name="myRad01" value="95.4"> 95.4</label><br>
+  <label><input type="radio" name="myRad01" value="101"> 101</label><br>
 
-  Button: <input type=button value="click" onclick"{ document.getElementById('myArea01').value = 'Cool'}"><br>
-  Textarea:<br>
-  <textarea id="myArea01" cols=60 rows=5 > Cool this works </textarea><br>
+  <label>Hidden:</label>
+  <input type="hidden" name="secret" value="demo"><br>
 
-  Select Box:<BR>
-  <select id="mySelect01" size=2 onChange+"{document.getElementById('myArea01').value = document.getElementById('mySelect01').value}">
-  <option value='myDog'>Dog
-  <option value='myCat'>Cat
-  <option value='myMouse'>Mouse
-</select>
+  <label>File:</label>
+  <input type="file" name="uploadFile"><br>
+
+  <input type="reset" value="Reset"><br>
+  <input type="submit" value="Submit (advanced)"><br>
+
+  <label>Button:</label>
+  <input type="button" value="Click" onclick="document.getElementById('myArea01').value = 'Cool';"><br>
+
+  <label for="myArea01">Textarea:</label><br>
+  <textarea id="myArea01" name="notes" cols="60" rows="5">Cool this works</textarea><br>
+
+  <label for="mySelect01">Select Box:</label><br>
+  <select id="mySelect01" name="pet" size="2" onchange="document.getElementById('myArea01').value = this.value;">
+    <option value="Dog">Dog</option>
+    <option value="Cat">Cat</option>
+    <option value="Mouse">Mouse</option>
+  </select>
 </form>
