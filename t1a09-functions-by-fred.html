@@ -1,27 +1,53 @@
-<script>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Functions by Fred</title>
+  <script>
+    function myExampleFunction() {
+      const input = document.getElementById('myText01');
+      const number = Number.parseInt(input.value, 10);
 
-  function myExampleFunction(){
-    let myIn01 = parseInt(document.getElementById('myText01').value)
-    let mySum = myIn01 + myIn01
-    let myReply = myIn01 + ' + ' + myIn01 + ' = ' + mySum
-    return myReply
-  }
-  
-</script>
+      if (Number.isNaN(number)) {
+        return 'Please enter a valid number.';
+      }
 
-<h2 aling=center>t1a09-functions-by-Fred.html</h2>
+      const sum = number + number;
+      return `${number} + ${number} = ${sum}`;
+    }
 
-<a href="https://www.w3schools.com/js/js_functions.asp">Good reference to Javascript functions</a><br>
+    function updateResult() {
+      const output = document.getElementById('myDiv01');
+      output.textContent = myExampleFunction();
+    }
 
-Functions are used to sensibly organize code. Then they are "Callled" elsewhere.
-Information can aslo e passed to functions (that's more advanced).
+    document.addEventListener('DOMContentLoaded', () => {
+      document.getElementById('calcButton').addEventListener('click', updateResult);
+    });
+  </script>
+</head>
+<body>
+  <h2 align="center">t1a09-functions-by-Fred.html</h2>
 
-<h4> Example working code</h4>
+  <p>
+    <a href="https://www.w3schools.com/js/js_functions.asp">
+      Good reference to JavaScript functions
+    </a>
+  </p>
 
-<input type=text id="myText01" value="3"><br>
+  <p>
+    Functions are used to organize code sensibly. They can then be called elsewhere.
+    Information can also be passed to functions (that is more advanced).
+  </p>
 
-<input type=button value="Function Example" onClick="{
-  document.getElementById('myDiv01').innerHTML = myExampleFunction()
-  }">
+  <h4>Example working code</h4>
+
+  <label for="myText01">Enter a number:</label>
+  <input type="text" id="myText01" value="3"><br><br>
+
+  <button id="calcButton" type="button">Function Example</button>
 
   <div id="myDiv01">...</div>
+</body>
+</html>
