@@ -1,43 +1,71 @@
-<h2 align=center>t1a08-loops-by-fred.html</h2>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Loops by Fred</title>
+</head>
+<body>
+  <h2 align="center">t1a08-loops-by-fred.html</h2>
 
-<a href="">Good reference to Javascript Loops</a><br>
+  <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Loops" target="_blank">
+    Good reference to JavaScript Loops
+  </a><br><br>
 
-<h4> Example input output code</h4>
-<pre>
-  for (let myLoop = 0; myLoop < myMax; myLoop++ ){
-                                // your code here
-    }
-</pre>
+  <h4>Example input output code</h4>
+  <pre>
+for (let myLoop = 0; myLoop < myMax; myLoop++) {
+  // your code here
+}
+  </pre>
 
-<h4> Example working code</h4>
+  <h4>Example working code</h4>
 
-Max loops: <input id="myNum01" type=number value="4" ><br>
-weird number: <input id="myWeird" type=number value="2" ><br>
+  <label>Max loops:
+    <input id="myNum01" type="number" value="4">
+  </label><br>
 
-<input type=number value="Basic for loop with Dicisions" onclick="{
-  document.getElementById('myDiv01').innerHTML = ''
-  let myTemp = ''
-  let myMax = parseInt(document.getElementById('myNum01').value)
-  
-  for (let myLoop = 0; myLoop < myMax; myLoop++ ){
-    if (myLoop * 2 > myMax){
-      myTemp += ' cool '
-    }
-  myTemp += 'Loop number: ' + myLoop + '<br>
-  }
-  document.getElementById('myDiv01').innerHTML = myTemp
-}">
+  <label>Weird number:
+    <input id="myWeird" type="number" value="2">
+  </label><br>
 
-<input type=number value="Even number identifier" onclick="{
-  document.getElementById('myDiv01').innerHTML = ''
-  let myTemp = ''
+  <button type="button" id="basicLoopBtn">Basic for loop with decisions</button>
+  <button type="button" id="evenLoopBtn">Even number identifier</button>
 
-  let myMax = parseInt(document.getElementById('myNum01').value)
-  for (let myLoop = 0; myLoop < myMax; myLoop++ ){
-    if (myLoop % 2 == 0){
-      myTemp += 'Even number, '
-    }
-    document.getElementById('myDiv01').innerHTML = myTemp
-}">
+  <div id="myDiv01" style="color: red;">...</div>
 
-<div id='myDiv01'><font color=red>...</font></div>
+  <script>
+    const myNum01 = document.getElementById('myNum01');
+    const myDiv01 = document.getElementById('myDiv01');
+
+    document.getElementById('basicLoopBtn').addEventListener('click', () => {
+      myDiv01.innerHTML = '';
+      let myTemp = '';
+      const myMax = parseInt(myNum01.value, 10);
+
+      for (let myLoop = 0; myLoop < myMax; myLoop++) {
+        if (myLoop * 2 > myMax) {
+          myTemp += ' cool ';
+        }
+        myTemp += 'Loop number: ' + myLoop + '<br>';
+      }
+
+      myDiv01.innerHTML = myTemp;
+    });
+
+    document.getElementById('evenLoopBtn').addEventListener('click', () => {
+      myDiv01.innerHTML = '';
+      let myTemp = '';
+      const myMax = parseInt(myNum01.value, 10);
+
+      for (let myLoop = 0; myLoop < myMax; myLoop++) {
+        if (myLoop % 2 === 0) {
+          myTemp += 'Even number, ';
+        }
+      }
+
+      myDiv01.innerHTML = myTemp;
+    });
+  </script>
+</body>
+</html>
