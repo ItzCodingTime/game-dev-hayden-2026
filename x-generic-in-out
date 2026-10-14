@@ -25,4 +25,18 @@ Student Name: <u> Fred </u>, Date: <u> 10/14/2026 </u>, Assignment Title: <u> Ar
 <input id="myNum01" type=number value="4" ><br><br>
 
 <input type=button value="Do Assignment" onclick="{
-  let myIn01 = document.getElementById('myNum01').value;
+    let myIn01 = document.getElementById('myNum01').value;
+
+    // 1. Create an array of at least 4 game items
+    let gameItems = ['Sword', 'Shield', 'Potion', 'Bow'];
+    let resultString = '';
+
+    // 2. Uses a for loop to go through the array up to the input number
+    for (let i = 0; i < myIn01 && i < gameItems.length; i++) {
+        resultString += gamesItems[i] + '<br>';
+    }
+
+    // 3. Display the results in the output div
+    document.getElementById('myDiv01').innerHTML = 'The Input was ' + myIn01 + '<br><br>' = resultString;
+}"><br><br>
+<div id="myDiv01">...</div>
