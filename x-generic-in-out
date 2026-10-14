@@ -15,4 +15,14 @@ function myFunction(){
 Student Name: <u> Fred </u>, Date: <u> 10/14/2026 </u>, Assignment Title: <u> Array & Loop Challenge </u> <br><br>
 
 <!-- Assignment Instructions shown on the webpage -->
-<div style="background
+<div style="background: #f4f4f4; padding: 10px; border: 1px solid #ccc; margin-bottom: 15px; font-family: monospace;">
+  <b>Assignment Instructions:</br><br>
+  Write JavaScript code inside the button's <code>onclick</code> event below that:<br>
+  1. Creates an array of at least 4 game items.<br>
+  2. Uses a <code>for</code> loop to go through the array up to the number entered in the input box.<br>
+  3. Displays each item in the output div below along with the original input value.</div>
+
+<input id="myNum01" type=number value="4" ><br><br>
+
+<input type=button value="Do Assignment" onclick="{
+  let myIn01 = document.getElementById('myNum01').value;
