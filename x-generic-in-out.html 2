@@ -1,4 +1,7 @@
-function doAssignment() {
+<head>
+<script>
+<!-- All functions go here -->
+function myFunction() {
     // 1. Get the input value
     let inputVal = document.getElementById("inputValue").value;
     let numericInput = Number(inputVal);
@@ -22,3 +25,5 @@ function doAssignment() {
     outputDiv.appendChild(p1);
 
     let p2 = document.createElement("p");
+<head>
+<script>
