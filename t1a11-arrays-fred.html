@@ -6,51 +6,65 @@
 
 <h4>Example: displaying array items</h4>
 
-<label for="myText01">Max Array Entry:</label>
-<input type="number" id="myText01" value="3" min="0" max="10"><br><br>
+<label for="myText01">Show first N names:</label>
+<input type="number" id="myText01" value="3" min="0" max="5" step="1"><br><br>
 
-<button id="showArrayBtn">Show Names</button>
-<button id="showNumberBtn">Show Number Array</button>
+<button id="showArrayBtn" type="button">Show Names</button>
+<button id="showNumberBtn" type="button">Show Number Array</button>
+<button id="clearBtn" type="button">Clear</button>
 
-<div id="myDiv01">...</div>
+<div id="myDiv01" aria-live="polite">...</div>
 
 <script>
   const nameArray = ['Fred', 'Mary', 'Lizzy', 'Sam', 'Ava'];
+  const numberArray = [10, 25, 30, 40, 50];
 
-  document.getElementById('showArrayBtn').addEventListener('click', showArrayExample);
-  document.getElementById('showNumberBtn').addEventListener('click', showNumberArrayExample);
+  const outputEl = document.getElementById('myDiv01');
+  const inputEl = document.getElementById('myText01');
+
+  function updateOutput(message) {
+    outputEl.innerHTML = message;
+  }
 
   function showArrayExample() {
-    const maxEntries = Number(document.getElementById('myText01').value);
+    const maxEntries = Number.parseInt(inputEl.value, 10);
 
-    if (isNaN(maxEntries) || maxEntries < 0) {
-      document.getElementById('myDiv01').innerHTML = 'Please enter a valid number.';
+    if (!Number.isInteger(maxEntries) || maxEntries < 0) {
+      updateOutput('Please enter a valid whole number from 0 to ' + nameArray.length + '.');
       return;
     }
 
     const safeMax = Math.min(maxEntries, nameArray.length);
 
     let output = '<strong>Names in the array:</strong><br>';
+
     for (let i = 0; i < safeMax; i++) {
-      output += 'Loop #: ' + i + ' | array entry: ' + nameArray[i] + '<br>';
+      output += `Loop #${i} | array entry: ${nameArray[i]}<br>`;
     }
 
-    document.getElementById('myDiv01').innerHTML = output;
+    updateOutput(output);
   }
 
   function showNumberArrayExample() {
-    const numberArray = [10, 25, 30, 40, 50];
     let total = 0;
     let output = '<strong>Number array example:</strong><br>';
 
     for (let i = 0; i < numberArray.length; i++) {
       total += numberArray[i];
-      output += 'Value ' + i + ': ' + numberArray[i] + '<br>';
+      output += `Value ${i}: ${numberArray[i]}<br>`;
     }
 
-    output += '<br><strong>Total:</strong> ' + total;
-    output += '<br><strong>Average:</strong> ' + (total / numberArray.length);
+    const average = total / numberArray.length;
 
-    document.getElementById('myDiv01').innerHTML = output;
+    output += `<br><strong>Total:</strong> ${total}`;
+    output += `<br><strong>Average:</strong> ${average.toFixed(2)}`;
+
+    updateOutput(output);
   }
+
+  document.getElementById('showArrayBtn').addEventListener('click', showArrayExample);
+  document.getElementById('showNumberBtn').addEventListener('click', showNumberArrayExample);
+  document.getElementById('clearBtn').addEventListener('click', () => {
+    updateOutput('...');
+  });
 </script>
