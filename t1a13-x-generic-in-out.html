@@ -1,31 +1,60 @@
+<!doctype html>
+<html lang="en">
 <head>
-<script>
-<!-- All functions go here -->
-function myFunction() {
-    // 1. Get the input value
-    let inputVal = document.getElementById("inputValue").value;
-    let numericInput = Number(inputVal);
-    
-    // 2. Create Javascript object for game character
-    let character = {
-        name: "Knight",
-        health: numericInput, 50
-        level: 5
-    };
-    
-    // Grab output container element
-    let outputDiv = document.getElementById("output");
-
-    // Clear previous output
-    outputDiv.innerHTML = "";
-
-    // 3. Create paragragh elements to displsy the required text
-    let p1 = document.getElementById("p");
-    p1.textContent = "The Input was " + numericInput;
-    outputDiv.appendChild(p1);
-
-    let p2 = document.createElement("p");
-}
-
-</script>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Generic In/Out Example</title>
+  <style>
+    body { font-family: system-ui, sans-serif; padding: 1rem; }
+    #output p { margin: 0.25rem 0; }
+    label, input, button { display: inline-block; margin-right: 0.5rem; }
+  </style>
 </head>
+<body>
+  <label for="inputValue">Enter health:</label>
+  <input id="inputValue" type="number" min="0" value="50" />
+  <button id="runBtn" type="button">Create character</button>
+
+  <div id="output" aria-live="polite"></div>
+
+  <script>
+    'use strict';
+
+    // Run main function when user clicks button or presses Enter in the input
+    function myFunction() {
+      const inputEl = document.getElementById('inputValue');
+      const raw = inputEl.value;
+      const numericInput = Number(raw);
+
+      // Validate numeric input and provide a fallback
+      const validatedHealth = Number.isFinite(numericInput) ? numericInput : 50;
+
+      // Create JavaScript object for game character
+      const character = {
+        name: 'Knight',
+        health: validatedHealth,
+        level: 5
+      };
+
+      // Grab output container element and clear previous output
+      const outputDiv = document.getElementById('output');
+      outputDiv.innerHTML = '';
+
+      // Create paragraph elements and append them
+      const p1 = document.createElement('p');
+      p1.textContent = 'The input was ' + validatedHealth;
+      outputDiv.appendChild(p1);
+
+      const p2 = document.createElement('p');
+      p2.textContent = `Character: ${character.name} — Health: ${character.health} — Level: ${character.level}`;
+      outputDiv.appendChild(p2);
+    }
+
+    // Wire up UI
+    document.getElementById('runBtn').addEventListener('click', myFunction);
+    document.getElementById('inputValue').addEventListener('keydown', function (e) {
+      if (e.key === 'Enter') myFunction();
+    });
+  </script>
+</body>
+</html>
