@@ -2,33 +2,55 @@
 
 <a href="https://www.w3schools.com/js/js_arrays.asp" target="_blank" rel="noopener">
   Good reference to JavaScript Arrays
-</a><br>
+</a><br><br>
 
-<h4>Example working array code</h4>
+<h4>Example: displaying array items</h4>
 
-Max Array Entry:
-<input type="number" id="myText01" value="3" min="0" max="10"><br>
+<label for="myText01">Max Array Entry:</label>
+<input type="number" id="myText01" value="3" min="0" max="10"><br><br>
 
-<input type="button" value="Example" onclick="showArrayExample()">
+<button id="showArrayBtn">Show Names</button>
+<button id="showNumberBtn">Show Number Array</button>
 
 <div id="myDiv01">...</div>
 
-<br>
-
-You can make more arrays that do different things, including arrays of numbers.<br>
-
 <script>
+  const nameArray = ['Fred', 'Mary', 'Lizzy', 'Sam', 'Ava'];
+
+  document.getElementById('showArrayBtn').addEventListener('click', showArrayExample);
+  document.getElementById('showNumberBtn').addEventListener('click', showNumberArrayExample);
+
   function showArrayExample() {
-    let myTemp = Number(document.getElementById('myText01').value);
-    let mySum = '';
-    let myArray = ['Fred', 'Mary', 'Lizzy'];
+    const maxEntries = Number(document.getElementById('myText01').value);
 
-    document.getElementById('myDiv01').innerHTML = '';
-
-    for (let myLoop = 0; myLoop < myTemp && myLoop < myArray.length; myLoop++) {
-      mySum += 'Loop #: ' + myLoop + ' array entry: ' + myArray[myLoop] + '<br>';
+    if (isNaN(maxEntries) || maxEntries < 0) {
+      document.getElementById('myDiv01').innerHTML = 'Please enter a valid number.';
+      return;
     }
 
-    document.getElementById('myDiv01').innerHTML = mySum;
+    const safeMax = Math.min(maxEntries, nameArray.length);
+
+    let output = '<strong>Names in the array:</strong><br>';
+    for (let i = 0; i < safeMax; i++) {
+      output += 'Loop #: ' + i + ' | array entry: ' + nameArray[i] + '<br>';
+    }
+
+    document.getElementById('myDiv01').innerHTML = output;
+  }
+
+  function showNumberArrayExample() {
+    const numberArray = [10, 25, 30, 40, 50];
+    let total = 0;
+    let output = '<strong>Number array example:</strong><br>';
+
+    for (let i = 0; i < numberArray.length; i++) {
+      total += numberArray[i];
+      output += 'Value ' + i + ': ' + numberArray[i] + '<br>';
+    }
+
+    output += '<br><strong>Total:</strong> ' + total;
+    output += '<br><strong>Average:</strong> ' + (total / numberArray.length);
+
+    document.getElementById('myDiv01').innerHTML = output;
   }
 </script>
