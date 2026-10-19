@@ -1,42 +1,67 @@
+<!doctype html>
+<html lang="en">
 <head>
-<script>
-<!-- All functions go here -->
-function myFunction(){
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>x-generic-in-out</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 16px; }
+    .instructions { background:#f4f4f4; padding:10px; border:1px solid #ccc; font-family: monospace; margin-bottom:15px; }
+  </style>
+  <script>
+    // Runs the assignment logic
+    function doAssignment() {
+      const inputEl = document.getElementById('myNum01');
+      const out = document.getElementById('myDiv01');
 
+      // Convert input value to a number and validate
+      const requested = Number(inputEl.value);
+      if (!Number.isFinite(requested) || requested < 0) {
+        out.innerHTML = 'Please enter a valid non-negative number.';
+        return;
+      }
 
+      // 1) Create an array of at least 4 game items
+      const gameItems = ['Sword', 'Shield', 'Potion', 'Bow', 'Helmet', 'Armor'];
 
+      // 2) Use a loop to go through the array up to the number entered
+      const count = Math.min(Math.floor(requested), gameItems.length);
+      let resultString = '';
 
-}
+      for (let i = 0; i < count; i++) {
+        // show index + item
+        resultString += (i + 1) + '. ' + gameItems[i] + '<br>';
+      }
 
-</script>
-</head>
-
-<h2 align=center>x-generic-in-out.html </h2>
-Student Name: <u> Fred </u>, Date: <u> 10/14/2026 </u>, Assignment Title: <u> Array & Loop Challenge </u> <br><br>
-
-<!-- Assignment Instructions shown on the webpage -->
-<div style="background: #f4f4f4; padding: 10px; border: 1px solid #ccc; margin-bottom: 15px; font-family: monospace;">
-  <b>Assignment Instructions:</br><br>
-  Write JavaScript code inside the button's <code>onclick</code> event below that:<br>
-  1. Creates an array of at least 4 game items.<br>
-  2. Uses a <code>for</code> loop to go through the array up to the number entered in the input box.<br>
-  3. Displays each item in the output div below along with the original input value.</div>
-
-<input id="myNum01" type=number value="4" ><br><br>
-
-<input type=button value="Do Assignment" onclick="{
-    let myIn01 = document.getElementById('myNum01').value;
-
-    // 1. Create an array of at least 4 game items
-    let gameItems = ['Sword', 'Shield', 'Potion', 'Bow'];
-    let resultString = '';
-
-    // 2. Uses a for loop to go through the array up to the input number
-    for (let i = 0; i < myIn01 && i < gameItems.length; i++) {
-        resultString += gamesItems[i] + '<br>';
+      // 3) Display each item with the original input value
+      out.innerHTML = 'The input was ' + requested + '<br><br>' + (resultString || '(no items to show)');
     }
 
-    // 3. Display the results in the output div
-    document.getElementById('myDiv01').innerHTML = 'The Input was ' + myIn01 + '<br><br>' = resultString;
-}"><br><br>
-<div id="myDiv01">...</div>
+    // Attach event listeners after DOM loads (keeps HTML clean of inline JS)
+    document.addEventListener('DOMContentLoaded', function () {
+      document.getElementById('doBtn').addEventListener('click', doAssignment);
+    });
+  </script>
+</head>
+<body>
+  <h2 style="text-align:center">x-generic-in-out.html</h2>
+  <p>Student Name: <u>Fred</u>, Date: <u>10/14/2026</u>, Assignment Title: <u>Array &amp; Loop Challenge</u></p>
+
+  <div class="instructions">
+    <b>Assignment Instructions:</b><br><br>
+    Write JavaScript code that:<br>
+    1. Creates an array of at least 4 game items.<br>
+    2. Uses a <code>for</code> loop to go through the array up to the number entered in the input box.<br>
+    3. Displays each item in the output div below along with the original input value.
+  </div>
+
+  <label for="myNum01">How many items to show:</label>
+  <input id="myNum01" type="number" min="0" max="10" value="4" />
+  <br><br>
+
+  <button id="doBtn" type="button">Do Assignment</button>
+  <br><br>
+
+  <div id="myDiv01" aria-live="polite">...</div>
+</body>
+</html>
