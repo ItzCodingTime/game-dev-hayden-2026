@@ -1,34 +1,66 @@
-<h2 align=center>t1a12-objects-fred.html</h2>
-<script>
-  // What might be a good idea to declare here?
-  
-</script>
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>t1a12-objects-fred</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+</head>
+<body>
+  <h2 style="text-align:center">t1a12-objects-fred.html</h2>
 
-<a href="">Good reference to JavaScript Objects (you find one)</a><br>
+  <p>
+    <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Working_with_Objects"
+       target="_blank" rel="noopener">
+      Good reference to JavaScript Objects (MDN)
+    </a>
+  </p>
 
-Objects are stored named variables
+  <p>Objects are stored in named variables</p>
 
+  <h4>Example working Objects code</h4>
 
-<h4> Example working Objects code</h4>
+  <label>
+    Nothing:
+    <input type="text" id="myText01" value="Useless at the moment">
+  </label>
+  <br>
 
-Nothing: <input type=text id="myText01" value="Useless at the moment"><br>
-
-
-<input type=button value="Example Object Set and Show" onClick="{
-
-  let myPerson = {
-    'firstName' : 'John',
-    'lastName' : 'Doe',
-    'age' : 50,
-    'eyeColor' : 'blue'
-  }
-
-  document.getElementById('myDiv01').innerHTML = '<br>myPerson Object has Properties : <br>'
-  document.getElementById('myDiv01').innerHTML += 'firstName: ' + myPerson.firstName + <br>'
-  document.getElementById('myDiv01').innerHTML += 'You do the others <br>'
-
-  }">
+  <button id="btnShow">Example Object Set and Show</button>
 
   <div id="myDiv01">...</div>
 
-  <b>Lets talk local and global variations, why might it be best to declare the object in the script tag?</b>
+  <script>
+    // Declare objects near top so they can be reused if needed.
+    // If you only need the object inside a handler, declare it inside that handler (local scope).
+    const myPerson = {
+      firstName: 'John',
+      lastName: 'Doe',
+      age: 50,
+      eyeColor: 'blue'
+    };
+
+    // Attach listeners after DOM ready — avoids inline handlers and keeps markup clean.
+    document.addEventListener('DOMContentLoaded', () => {
+      const btn = document.getElementById('btnShow');
+      const out = document.getElementById('myDiv01');
+
+      btn.addEventListener('click', () => {
+        // Build HTML dynamically — works for any object shape.
+        const rows = Object.entries(myPerson).map(([key, val]) =>
+          `<li>${key}: ${String(val)}</li>`
+        );
+        out.innerHTML = `<strong>myPerson Object has properties:</strong>
+                         <ul>${rows.join('')}</ul>`;
+
+        // If you need to read user input safely:
+        // const userValue = document.getElementById('myText01').value;
+        // out.textContent += '\nUser value: ' + userValue; // use textContent for raw text
+      });
+    });
+
+    // Notes on scoping:
+    // - Global (top-level const/let) is ok for demo objects you want to reuse across functions.
+    // - Local (inside a function or event handler) is better when the object is only needed temporarily.
+  </script>
+</body>
+</html>
