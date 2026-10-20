@@ -1,26 +1,38 @@
-<h2 align=center>t1a13-Classes-by-fred.html</h2>
+<h2 align="center">t1a13-Classes-by-fred.html</h2>
 
-<a href="">Find a good referance to Javascript Classes</a><br>
-Classes are both Objects that store variables (Called Properties) and Functions that work on the variables (called Methods)
+<p>
+  <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Classes">
+    Find a good reference for JavaScript classes
+  </a>
+</p>
 
-<h4> Example working Classes code</h4>
-Nothing: <input type=text id="myText01" value="Useless at the moment"><br>
-<input type=button value="Example Class Set and Show Class Animal" onClick="{
+<p>
+  Classes are objects that store data (called properties) and functions that work with that data
+  (called methods).
+</p>
 
-  class myAnimal {
+<h4>Example: JavaScript class</h4>
+
+Name: <input type="text" id="myText01" value="Useless at the moment"><br>
+<input type="button" id="exampleButton" value="Show Animal Class Example">
+
+<div id="myDiv">...</div>
+
+<script>
+  class Animal {
     constructor(passName, passAge) {
-        this.myName = passName;
-        this.myAge = passAge;
+      this.myName = passName;
+      this.myAge = passAge;
     }
-    myShow(){
-      document.getElementById('myDiv').innerHTML = 'Hello '+ this.myName + '. You are ' + this.myAge + ' years old<br>'
+
+    myShow() {
+      document.getElementById('myDiv').innerHTML =
+        `Hello ${this.myName}. You are ${this.myAge} years old.<br>`;
     }
-  }  // end class myAnimal
+  }
 
-
-    myDog = new myAnimal('Snickers', 5)
-    myDog.myShow()
-
-}">
-
-<div id="myDiv01">...</div>
+  document.getElementById('exampleButton').addEventListener('click', () => {
+    const myDog = new Animal('Snickers', 5);
+    myDog.myShow();
+  });
+</script>
