@@ -1,29 +1,47 @@
+<!DOCTYPE html>
+<html>
 <head>
   <script>
-    <!-- All functions go here -->
+    // STEP 1: Define a global object called 'myHero'
+    let myHero = {
+      name: "Frozone",
+      power: 100,
+      comment: "Ready for training!"
+    };
 
-      // STEP 1: Define a global object called 'myHero'
-      // Properties needed: name (string), power (number, starting at 100), comment (string)
+    function trainHero() {
+      if (myHero.power > 0) {
+        myHero.power -= 10;
 
-      let myHero.name ("Frozone"), power (100), comment ("Ready for training!")
-      function trainHero(){
-        // you write this
-
+        if (myHero.power >= 100) {
+          myHero.comment = "Full power!";
+        } else if (myHero.power >= 50) {
+          myHero.comment = "Low power!";
+        } else if (myHero.power > 0) {
+          myHero.comment = "Weak but still standing!";
+        } else {
+          myHero.comment = "Defeated!";
+        }
+      } else {
+        myHero.comment = "Defeated! Cannot train again.";
       }
+
+      document.getElementById("myDiv01").innerHTML =
+        "Hero: " + myHero.name +
+        "<br>Power: " + myHero.power +
+        "<br>Comment: " + myHero.comment;
+    }
   </script>
 </head>
 
-<h2 align=center>t1a16-powerup-fred-by.html</h2>
-Student Name: Hayden, Date: 10/27.2026, Assignment Title: Stateful Object Assignment<br><br>
+<body>
+  <h2 align="center">t1a16-powerup-fred-by.html</h2>
+  Student Name: Hayden, Date: 10/27.2026, Assignment Title: Stateful Object Assignment<br><br>
 
+  <input type="button" value="Train Hero (-10 Power)" onclick="trainHero()"><br><br>
 
-<input type=button value="Train Hero (-10 Power) onclick="{
-  
-  if myHero.power (100) = myHero full power
-  else if myHero.power (50) = myHero low power
-  else myHero.power (0) = myHero defeated
-  
-  document.getElementById('myDiv01').innerHTML = 'The Input was ' + myHero.power
-}"><br><br>
-
-<div id="myDiv01">Click the button above to begin training! Initial Power: 100</div>
+  <div id="myDiv01">
+    Click the button above to begin training! Initial Power: 100
+  </div>
+</body>
+</html>
