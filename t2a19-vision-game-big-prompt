@@ -1,441 +1,477 @@
-// ---------- State ----------
-let myVideoStream = null;
-let myIsCameraActive = false;
-let myTrainingData = { UP: [], DOWN: [], LEFT: [], RIGHT: [], NEUTRAL: [] };
-let myIsTraining = false;
-let myCurrentTrainingClass = null;
-let myPredictionLabel = "NEUTRAL";
-let myPredictionConfidence = 0;
-let myGameRunning = false;
-let myGamePaused = false;
-let myPlayerX = 200;
-let myPlayerY = 150;
-let myBaseSpeed = 5;
-let myTreasures = [];
-let myCollectedCount = 0;
-let myKeys = {};
-let myLastFrameTime = 0;
-let myAnimationFrameId = null;
-const myK = 5;
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Offline Vision Quest</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 12px;
+      background: #f5f5f5;
+      color: #222;
+    }
+    h1 { text-align: center; margin: 8px 0; }
+    .panel {
+      border: 1px solid #aaa;
+      padding: 10px;
+      margin-bottom: 12px;
+      background: #fff;
+    }
+    .row { margin: 6px 0; }
+    button, select, input[type="number"] {
+      margin: 2px 4px;
+      padding: 4px 8px;
+    }
+    video {
+      width: 320px;
+      height: 240px;
+      background: #000;
+      border: 1px solid #666;
+    }
+    #myProcessCanvas {
+      width: 128px;
+      height: 128px;
+      image-rendering: pixelated;
+      border: 1px solid #666;
+      background: #111;
+    }
+    #myGameCanvas {
+      border: 1px solid #333;
+      background: #e8f4f8;
+    }
+    .status { font-weight: bold; }
+    .counters { font-size: 0.95em; }
+  </style>
+</head>
+<body>
+  <h1>Offline Vision Quest</h1>
 
-// ---------- DOM references ----------
-const myVideo = document.getElementById("myVideo");
-const myProcessCanvas = document.getElementById("myProcessCanvas");
-const myProcessCtx = myProcessCanvas.getContext("2d");
-const myGameCanvas = document.getElementById("myGameCanvas");
-const myGameCtx = myGameCanvas.getContext("2d");
-const myFacingSelect = document.getElementById("myFacingSelect");
-const myActivateBtn = document.getElementById("myActivateBtn");
-const myStopBtn = document.getElementById("myStopBtn");
-const myClearBtn = document.getElementById("myClearBtn");
-const mySaveBtn = document.getElementById("mySaveBtn");
-const myLoadBtn = document.getElementById("myLoadBtn");
-const myLoadInput = document.getElementById("myLoadInput");
-const mySpeedInput = document.getElementById("mySpeedInput");
-const myStartBtn = document.getElementById("myStartBtn");
-const myPauseBtn = document.getElementById("myPauseBtn");
-const myResetBtn = document.getElementById("myResetBtn");
-const myPredictionLabelEl = document.getElementById("myPredictionLabel");
-const myPredictionConfidenceEl = document.getElementById("myPredictionConfidence");
-const myTotalSamplesEl = document.getElementById("myTotalSamples");
-const myTreasureCountEl = document.getElementById("myTreasureCount");
-const mySpeedDisplayEl = document.getElementById("mySpeedDisplay");
+  <div class="panel">
+    <h2>Camera Lab & Feature Extraction</h2>
+    <div class="row">
+      Facing:
+      <select id="myFacingSelect">
+        <option value="user">Front (user)</option>
+        <option value="environment">Rear (environment)</option>
+      </select>
+      <button id="myActivateBtn">Activate WebCam</button>
+      <button id="myStopBtn">Stop</button>
+    </div>
+    <div class="row">
+      <video id="myVideo" autoplay playsinline muted></video>
+      <canvas id="myProcessCanvas" width="16" height="16"></canvas>
+    </div>
+    <div class="row">
+      Feature vector: 16×16 grayscale (256 values, 0–1). Horizontally mirrored for intuitive control.
+    </div>
+  </div>
 
-// ---------- Canvas sizing ----------
-<video id="myVideo" autoplay playsinline muted width="320" height="240"></video>
-<canvas id="myProcessCanvas" width="16" height="16"></canvas>
-<canvas id="myGameCanvas" width="400" height="300"></canvas>
+  <div class="panel">
+    <h2>ML Training Engine</h2>
+    <div class="row">
+      Hold a button to collect samples continuously:
+    </div>
+    <div class="row">
+      <button id="myTrainUp">Train UP</button>
+      <button id="myTrainDown">Train DOWN</button>
+      <button id="myTrainLeft">Train LEFT</button>
+      <button id="myTrainRight">Train RIGHT</button>
+      <button id="myTrainNeutral">Train NEUTRAL</button>
+    </div>
+    <div class="row counters" id="myCounters">
+      UP: 0 | DOWN: 0 | LEFT: 0 | RIGHT: 0 | NEUTRAL: 0 | Total: 0
+    </div>
+    <div class="row">
+      <button id="myClearBtn">Clear Training Data</button>
+      <button id="mySaveBtn">Save Model</button>
+      <button id="myLoadBtn">Load Model</button>
+      <input type="file" id="myLoadInput" accept=".json" style="display:none">
+    </div>
+  </div>
 
-// ---------- Camera ----------
-async function myActivateCamera() {
-  if (myIsCameraActive) return;
+  <div class="panel">
+    <h2>Live Prediction Engine</h2>
+    <div class="row status" id="myPredictionDisplay">
+      Predicted: — | Confidence: —
+    </div>
+    <div class="row">
+      k-NN (k = 3) running on the current 16×16 frame features.
+    </div>
+  </div>
 
-  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-    alert("This browser does not support camera access.");
-    return;
-  }
+  <div class="panel">
+    <h2>Treasure Game</h2>
+    <div class="row">
+      <button id="myStartBtn">Start / Resume</button>
+      <button id="myPauseBtn">Pause</button>
+      <button id="myResetBtn">Reset Game</button>
+      Speed:
+      <input type="number" id="mySpeedInput" value="3" min="1" max="20" step="0.5">
+      Collected: <span id="myTreasureCount">0</span> / 3
+    </div>
+    <div class="row">
+      <canvas id="myGameCanvas" width="400" height="300"></canvas>
+    </div>
+    <div class="row">
+      Move with predicted direction (when confidence is high) or arrow keys / WASD.
+    </div>
+  </div>
 
-  // This is required: camera access will fail from file://
-  if (location.protocol !== "https:" && location.hostname !== "localhost" && location.hostname !== "127.0.0.1") {
-    alert("Camera access requires HTTPS or localhost. Run a local server.");
-    return;
-  }
+  <script>
+    // ---------- Shared state ----------
+    let myVideo = document.getElementById("myVideo");
+    let myProcessCanvas = document.getElementById("myProcessCanvas");
+    let myProcessCtx = myProcessCanvas.getContext("2d");
+    let myGameCanvas = document.getElementById("myGameCanvas");
+    let myGameCtx = myGameCanvas.getContext("2d");
 
-  try {
-    const constraints = {
-      video: {
-        facingMode: myFacingSelect.value,
-        width: { ideal: 320 },
-        height: { ideal: 240 }
-      },
-      audio: false
+    let myStream = null;
+    let myCameraActive = false;
+    let myAnimationId = null;
+
+    // Training samples: array of { label: string, features: number[256] }
+    let mySamples = [];
+    let myIsCollecting = false;
+    let myCurrentTrainLabel = null;
+    let myCollectInterval = null;
+
+    // Prediction
+    let myPredictedLabel = "NEUTRAL";
+    let myConfidence = 0;
+    const myK = 3;
+
+    // Game state
+    let myGameRunning = false;
+    let myPlayerX = 200;
+    let myPlayerY = 150;
+    let myPlayerSize = 20;
+    let mySpeed = 3;
+    let myTreasures = [];
+    let myCollected = 0;
+    let myKeys = { up: false, down: false, left: false, right: false };
+
+    // ---------- Camera ----------
+    async function myActivateCamera() {
+      myStopCamera();
+      const facing = document.getElementById("myFacingSelect").value;
+      try {
+        myStream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: facing, width: { ideal: 320 }, height: { ideal: 240 } },
+          audio: false
+        });
+        myVideo.srcObject = myStream;
+        myCameraActive = true;
+        myStartLoop();
+      } catch (err) {
+        alert("Camera error: " + err.message);
+      }
+    }
+
+    function myStopCamera() {
+      myCameraActive = false;
+      if (myAnimationId) {
+        cancelAnimationFrame(myAnimationId);
+        myAnimationId = null;
+      }
+      if (myStream) {
+        myStream.getTracks().forEach(track => track.stop());
+        myStream = null;
+      }
+      myVideo.srcObject = null;
+    }
+
+    function myStartLoop() {
+      function myFrame() {
+        if (!myCameraActive) return;
+        myExtractFeatures();
+        if (myGameRunning) myUpdateGame();
+        myAnimationId = requestAnimationFrame(myFrame);
+      }
+      myFrame();
+    }
+
+    // ---------- Feature extraction (16x16 grayscale, mirrored) ----------
+    function myExtractFeatures() {
+      if (myVideo.readyState < 2) return null;
+
+      myProcessCtx.save();
+      myProcessCtx.clearRect(0, 0, 16, 16);
+      // Horizontal mirror so left/right feel natural
+      myProcessCtx.translate(16, 0);
+      myProcessCtx.scale(-1, 1);
+      myProcessCtx.drawImage(myVideo, 0, 0, 16, 16);
+      myProcessCtx.restore();
+
+      const imageData = myProcessCtx.getImageData(0, 0, 16, 16);
+      const data = imageData.data;
+      const features = new Array(256);
+      for (let i = 0; i < 256; i++) {
+        const r = data[i * 4];
+        const g = data[i * 4 + 1];
+        const b = data[i * 4 + 2];
+        // Simple average grayscale, normalized 0-1
+        features[i] = (r + g + b) / (3 * 255);
+      }
+      return features;
+    }
+
+    // ---------- Training ----------
+    function myUpdateCounters() {
+      const counts = { UP: 0, DOWN: 0, LEFT: 0, RIGHT: 0, NEUTRAL: 0 };
+      mySamples.forEach(s => { if (counts[s.label] !== undefined) counts[s.label]++; });
+      const total = mySamples.length;
+      document.getElementById("myCounters").textContent =
+        `UP: ${counts.UP} | DOWN: ${counts.DOWN} | LEFT: ${counts.LEFT} | RIGHT: ${counts.RIGHT} | NEUTRAL: ${counts.NEUTRAL} | Total: ${total}`;
+    }
+
+    function myStartCollecting(label) {
+      myCurrentTrainLabel = label;
+      myIsCollecting = true;
+      if (myCollectInterval) clearInterval(myCollectInterval);
+      myCollectInterval = setInterval(() => {
+        if (!myIsCollecting || !myCameraActive) return;
+        const features = myExtractFeatures();
+        if (features) {
+          mySamples.push({ label: myCurrentTrainLabel, features: features });
+          myUpdateCounters();
+        }
+      }, 100); // collect ~10 samples per second while held
+    }
+
+    function myStopCollecting() {
+      myIsCollecting = false;
+      if (myCollectInterval) {
+        clearInterval(myCollectInterval);
+        myCollectInterval = null;
+      }
+    }
+
+    function myClearTraining() {
+      mySamples = [];
+      myUpdateCounters();
+    }
+
+    function mySaveModel() {
+      const blob = new Blob([JSON.stringify(mySamples)], { type: "application/json" });
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = "offline-vision-quest-model.json";
+      a.click();
+      URL.revokeObjectURL(a.href);
+    }
+
+    function myLoadModel(file) {
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        try {
+          const data = JSON.parse(e.target.result);
+          if (Array.isArray(data)) {
+            mySamples = data;
+            myUpdateCounters();
+            alert("Model loaded: " + mySamples.length + " samples");
+          } else {
+            alert("Invalid model file");
+          }
+        } catch (err) {
+          alert("Could not load model: " + err.message);
+        }
+      };
+      reader.readAsText(file);
+    }
+
+    // ---------- k-NN Prediction ----------
+    function myPredict(features) {
+      if (!features || mySamples.length === 0) {
+        myPredictedLabel = "—";
+        myConfidence = 0;
+        return;
+      }
+
+      // Compute Euclidean distances
+      const distances = mySamples.map(sample => {
+        let sum = 0;
+        for (let i = 0; i < 256; i++) {
+          const d = features[i] - sample.features[i];
+          sum += d * d;
+        }
+        return { label: sample.label, dist: Math.sqrt(sum) };
+      });
+
+      distances.sort((a, b) => a.dist - b.dist);
+      const nearest = distances.slice(0, myK);
+
+      // Majority vote
+      const votes = {};
+      nearest.forEach(n => { votes[n.label] = (votes[n.label] || 0) + 1; });
+      let bestLabel = "NEUTRAL";
+      let bestCount = 0;
+      for (const label in votes) {
+        if (votes[label] > bestCount) {
+          bestCount = votes[label];
+          bestLabel = label;
+        }
+      }
+
+      myPredictedLabel = bestLabel;
+      myConfidence = Math.round((bestCount / myK) * 100);
+    }
+
+    function myUpdatePredictionDisplay() {
+      document.getElementById("myPredictionDisplay").textContent =
+        `Predicted: ${myPredictedLabel} | Confidence: ${myConfidence}%`;
+    }
+
+    // ---------- Game ----------
+    function myResetGame() {
+      myPlayerX = 200;
+      myPlayerY = 150;
+      myCollected = 0;
+      myTreasures = [];
+      for (let i = 0; i < 3; i++) {
+        myTreasures.push({
+          x: 30 + Math.random() * 340,
+          y: 30 + Math.random() * 240,
+          size: 16
+        });
+      }
+      document.getElementById("myTreasureCount").textContent = myCollected;
+      myDrawGame();
+    }
+
+    function myDrawGame() {
+      myGameCtx.clearRect(0, 0, 400, 300);
+
+      // Draw treasures
+      myGameCtx.fillStyle = "#e6b800";
+      myTreasures.forEach(t => {
+        myGameCtx.beginPath();
+        myGameCtx.arc(t.x, t.y, t.size / 2, 0, Math.PI * 2);
+        myGameCtx.fill();
+        myGameCtx.strokeStyle = "#996600";
+        myGameCtx.stroke();
+      });
+
+      // Draw explorer (simple circle)
+      myGameCtx.fillStyle = "#3366cc";
+      myGameCtx.beginPath();
+      myGameCtx.arc(myPlayerX, myPlayerY, myPlayerSize / 2, 0, Math.PI * 2);
+      myGameCtx.fill();
+      myGameCtx.strokeStyle = "#003399";
+      myGameCtx.stroke();
+
+      // Label
+      myGameCtx.fillStyle = "#000";
+      myGameCtx.font = "14px Arial";
+      myGameCtx.fillText("Explorer", myPlayerX - 24, myPlayerY - 16);
+    }
+
+    function myUpdateGame() {
+      mySpeed = parseFloat(document.getElementById("mySpeedInput").value) || 3;
+
+      // Get current features and predict
+      const features = myExtractFeatures();
+      myPredict(features);
+      myUpdatePredictionDisplay();
+
+      let dx = 0;
+      let dy = 0;
+
+      // Keyboard override / fallback
+      if (myKeys.up) dy -= 1;
+      if (myKeys.down) dy += 1;
+      if (myKeys.left) dx -= 1;
+      if (myKeys.right) dx += 1;
+
+      // Prediction movement (only if confidence high enough and no strong keyboard conflict)
+      if (myConfidence >= 60) {
+        if (myPredictedLabel === "UP") dy -= 1;
+        else if (myPredictedLabel === "DOWN") dy += 1;
+        else if (myPredictedLabel === "LEFT") dx -= 1;
+        else if (myPredictedLabel === "RIGHT") dx += 1;
+        // NEUTRAL does nothing
+      }
+
+      // Normalize diagonal
+      if (dx !== 0 && dy !== 0) {
+        dx *= 0.707;
+        dy *= 0.707;
+      }
+
+      myPlayerX += dx * mySpeed;
+      myPlayerY += dy * mySpeed;
+
+      // Clamp to canvas
+      myPlayerX = Math.max(myPlayerSize / 2, Math.min(400 - myPlayerSize / 2, myPlayerX));
+      myPlayerY = Math.max(myPlayerSize / 2, Math.min(300 - myPlayerSize / 2, myPlayerY));
+
+      // Collect treasures
+      myTreasures = myTreasures.filter(t => {
+        const dist = Math.hypot(myPlayerX - t.x, myPlayerY - t.y);
+        if (dist < (myPlayerSize + t.size) / 2) {
+          myCollected++;
+          document.getElementById("myTreasureCount").textContent = myCollected;
+          return false;
+        }
+        return true;
+      });
+
+      myDrawGame();
+
+      if (myCollected >= 3) {
+        myGameRunning = false;
+        alert("You collected all treasures! Great job.");
+      }
+    }
+
+    // ---------- Event wiring ----------
+    document.getElementById("myActivateBtn").onclick = myActivateCamera;
+    document.getElementById("myStopBtn").onclick = myStopCamera;
+
+    function myBindTrainButton(id, label) {
+      const btn = document.getElementById(id);
+      btn.onpointerdown = () => myStartCollecting(label);
+      btn.onpointerup = myStopCollecting;
+      btn.onpointerleave = myStopCollecting;
+    }
+    myBindTrainButton("myTrainUp", "UP");
+    myBindTrainButton("myTrainDown", "DOWN");
+    myBindTrainButton("myTrainLeft", "LEFT");
+    myBindTrainButton("myTrainRight", "RIGHT");
+    myBindTrainButton("myTrainNeutral", "NEUTRAL");
+
+    document.getElementById("myClearBtn").onclick = myClearTraining;
+    document.getElementById("mySaveBtn").onclick = mySaveModel;
+    document.getElementById("myLoadBtn").onclick = () => document.getElementById("myLoadInput").click();
+    document.getElementById("myLoadInput").onchange = (e) => {
+      if (e.target.files[0]) myLoadModel(e.target.files[0]);
     };
 
-    myVideoStream = await navigator.mediaDevices.getUserMedia(constraints);
-    myVideo.srcObject = myVideoStream;
+    document.getElementById("myStartBtn").onclick = () => {
+      if (myTreasures.length === 0) myResetGame();
+      myGameRunning = true;
+    };
+    document.getElementById("myPauseBtn").onclick = () => { myGameRunning = false; };
+    document.getElementById("myResetBtn").onclick = myResetGame;
 
-    await myVideo.play();
+    // Keyboard
+    window.addEventListener("keydown", (e) => {
+      const key = e.key.toLowerCase();
+      if (key === "arrowup" || key === "w") myKeys.up = true;
+      if (key === "arrowdown" || key === "s") myKeys.down = true;
+      if (key === "arrowleft" || key === "a") myKeys.left = true;
+      if (key === "arrowright" || key === "d") myKeys.right = true;
+    });
+    window.addEventListener("keyup", (e) => {
+      const key = e.key.toLowerCase();
+      if (key === "arrowup" || key === "w") myKeys.up = false;
+      if (key === "arrowdown" || key === "s") myKeys.down = false;
+      if (key === "arrowleft" || key === "a") myKeys.left = false;
+      if (key === "arrowright" || key === "d") myKeys.right = false;
+    });
 
-    myIsCameraActive = true;
-    myStartProcessingLoop();
-  } catch (err) {
-    alert("Could not access camera: " + (err.message || err));
-  }
-}
-
-function myStopCamera() {
-  if (myAnimationFrameId) {
-    cancelAnimationFrame(myAnimationFrameId);
-    myAnimationFrameId = null;
-  }
-
-  if (myVideoStream) {
-    myVideoStream.getTracks().forEach(track => track.stop());
-    myVideoStream = null;
-  }
-
-  myVideo.srcObject = null;
-  myIsCameraActive = false;
-  myIsTraining = false;
-  myCurrentTrainingClass = null;
-}
-
-// ---------- Feature Extraction ----------
-function myExtractFeatures() {
-  if (!myIsCameraActive || myVideo.readyState < 2) return null;
-
-  myProcessCtx.clearRect(0, 0, 16, 16);
-  myProcessCtx.save();
-  myProcessCtx.translate(16, 0);
-  myProcessCtx.scale(-1, 1);
-  myProcessCtx.drawImage(myVideo, 0, 0, 16, 16);
-  myProcessCtx.restore();
-
-  const imageData = myProcessCtx.getImageData(0, 0, 16, 16);
-  const features = new Array(256);
-
-  for (let i = 0; i < 256; i++) {
-    const idx = i * 4;
-    const r = imageData.data[idx];
-    const g = imageData.data[idx + 1];
-    const b = imageData.data[idx + 2];
-    features[i] = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
-  }
-
-  return features;
-}
-
-// ---------- Training ----------
-function myUpdateSampleCounts() {
-  let total = 0;
-  for (const cls of Object.keys(myTrainingData)) {
-    const count = myTrainingData[cls].length;
-    const el = document.getElementById("myCount" + cls);
-    if (el) el.textContent = count;
-    total += count;
-  }
-  myTotalSamplesEl.textContent = total;
-}
-
-function myStartTraining(className) {
-  myCurrentTrainingClass = className;
-  myIsTraining = true;
-}
-
-function myStopTraining() {
-  myIsTraining = false;
-  myCurrentTrainingClass = null;
-}
-
-function myCollectSample(features) {
-  if (!myIsTraining || !myCurrentTrainingClass || !features) return;
-  myTrainingData[myCurrentTrainingClass].push(features);
-  myUpdateSampleCounts();
-}
-
-function myClearTraining() {
-  myTrainingData = { UP: [], DOWN: [], LEFT: [], RIGHT: [], NEUTRAL: [] };
-  myUpdateSampleCounts();
-}
-
-function mySaveModel() {
-  const data = JSON.stringify(myTrainingData);
-  const blob = new Blob([data], { type: "application/json" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = "offline-vision-quest-model.json";
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
-}
-
-function myLoadModel(event) {
-  const file = event.target.files[0];
-  if (!file) return;
-
-  const reader = new FileReader();
-  reader.onload = function (e) {
-    try {
-      const loaded = JSON.parse(e.target.result);
-      if (loaded && typeof loaded === "object") {
-        myTrainingData = {
-          UP: loaded.UP || [],
-          DOWN: loaded.DOWN || [],
-          LEFT: loaded.LEFT || [],
-          RIGHT: loaded.RIGHT || [],
-          NEUTRAL: loaded.NEUTRAL || []
-        };
-        myUpdateSampleCounts();
-        alert("Model loaded successfully.");
-      }
-    } catch (err) {
-      alert("Invalid model file.");
-    }
-  };
-
-  reader.readAsText(file);
-  myLoadInput.value = "";
-}
-
-// ---------- k-NN Prediction ----------
-function myEuclideanDistance(a, b) {
-  let sum = 0;
-  for (let i = 0; i < a.length; i++) {
-    const d = a[i] - b[i];
-    sum += d * d;
-  }
-  return Math.sqrt(sum);
-}
-
-function myPredict(features) {
-  if (!features) {
-    myPredictionLabel = "NEUTRAL";
-    myPredictionConfidence = 0;
-    myUpdatePredictionDisplay();
-    return;
-  }
-
-  const allSamples = [];
-  for (const cls of Object.keys(myTrainingData)) {
-    for (const sample of myTrainingData[cls]) {
-      allSamples.push({ label: cls, features: sample });
-    }
-  }
-
-  if (allSamples.length === 0) {
-    myPredictionLabel = "NEUTRAL";
-    myPredictionConfidence = 0;
-    myUpdatePredictionDisplay();
-    return;
-  }
-
-  const distances = allSamples.map(s => ({
-    label: s.label,
-    dist: myEuclideanDistance(features, s.features)
-  }));
-
-  distances.sort((a, b) => a.dist - b.dist);
-  const nearest = distances.slice(0, Math.min(myK, distances.length));
-
-  const votes = { UP: 0, DOWN: 0, LEFT: 0, RIGHT: 0, NEUTRAL: 0 };
-  for (const n of nearest) {
-    votes[n.label]++;
-  }
-
-  let bestLabel = "NEUTRAL";
-  let bestVotes = 0;
-  for (const cls of Object.keys(votes)) {
-    if (votes[cls] > bestVotes) {
-      bestVotes = votes[cls];
-      bestLabel = cls;
-    }
-  }
-
-  myPredictionLabel = bestLabel;
-  myPredictionConfidence = Math.round((bestVotes / nearest.length) * 100);
-  myUpdatePredictionDisplay();
-}
-
-function myUpdatePredictionDisplay() {
-  myPredictionLabelEl.textContent = myPredictionLabel;
-  myPredictionConfidenceEl.textContent = myPredictionConfidence + "%";
-}
-
-// ---------- Game ----------
-function myInitTreasures() {
-  myTreasures = [];
-  for (let i = 0; i < 3; i++) {
-    let x, y, tooClose;
-    do {
-      x = 30 + Math.random() * 340;
-      y = 30 + Math.random() * 240;
-      tooClose = false;
-
-      if (Math.hypot(x - 200, y - 150) < 50) tooClose = true;
-
-      for (const t of myTreasures) {
-        if (Math.hypot(x - t.x, y - t.y) < 40) tooClose = true;
-      }
-    } while (tooClose);
-
-    myTreasures.push({ x, y, collected: false });
-  }
-
-  myCollectedCount = 0;
-  myTreasureCountEl.textContent = "0";
-}
-
-function myResetGame() {
-  myPlayerX = 200;
-  myPlayerY = 150;
-  myInitTreasures();
-  myGameRunning = false;
-  myGamePaused = false;
-  myDrawGame();
-}
-
-function myStartGame() {
-  if (myTreasures.length === 0) myInitTreasures();
-  myGameRunning = true;
-  myGamePaused = false;
-}
-
-function myPauseGame() {
-  myGamePaused = true;
-}
-
-function myUpdateGame(delta) {
-  if (!myGameRunning || myGamePaused) return;
-
-  let dx = 0;
-  let dy = 0;
-  const confFactor = myPredictionConfidence / 100;
-
-  if (myPredictionLabel === "LEFT" && confFactor > 0.3) dx -= myBaseSpeed * confFactor;
-  if (myPredictionLabel === "RIGHT" && confFactor > 0.3) dx += myBaseSpeed * confFactor;
-  if (myPredictionLabel === "UP" && confFactor > 0.3) dy -= myBaseSpeed * confFactor;
-  if (myPredictionLabel === "DOWN" && confFactor > 0.3) dy += myBaseSpeed * confFactor;
-
-  if (myKeys["ArrowLeft"] || myKeys["a"] || myKeys["A"]) dx -= myBaseSpeed;
-  if (myKeys["ArrowRight"] || myKeys["d"] || myKeys["D"]) dx += myBaseSpeed;
-  if (myKeys["ArrowUp"] || myKeys["w"] || myKeys["W"]) dy -= myBaseSpeed;
-  if (myKeys["ArrowDown"] || myKeys["s"] || myKeys["S"]) dy += myBaseSpeed;
-
-  myPlayerX += dx * (delta / 16);
-  myPlayerY += dy * (delta / 16);
-
-  myPlayerX = Math.max(15, Math.min(385, myPlayerX));
-  myPlayerY = Math.max(15, Math.min(285, myPlayerY));
-
-  for (const t of myTreasures) {
-    if (!t.collected && Math.hypot(myPlayerX - t.x, myPlayerY - t.y) < 20) {
-      t.collected = true;
-      myCollectedCount++;
-      myTreasureCountEl.textContent = myCollectedCount;
-    }
-  }
-}
-
-function myDrawGame() {
-  myGameCtx.clearRect(0, 0, 400, 300);
-
-  myGameCtx.fillStyle = "#e8f4f8";
-  myGameCtx.fillRect(0, 0, 400, 300);
-
-  for (const t of myTreasures) {
-    if (t.collected) continue;
-    myGameCtx.fillStyle = "#d4a017";
-    myGameCtx.beginPath();
-    myGameCtx.arc(t.x, t.y, 12, 0, Math.PI * 2);
-    myGameCtx.fill();
-    myGameCtx.fillStyle = "#fff";
-    myGameCtx.font = "10px Arial";
-    myGameCtx.textAlign = "center";
-    myGameCtx.fillText("T", t.x, t.y + 3);
-  }
-
-  myGameCtx.fillStyle = "#2c5aa0";
-  myGameCtx.beginPath();
-  myGameCtx.arc(myPlayerX, myPlayerY, 14, 0, Math.PI * 2);
-  myGameCtx.fill();
-  myGameCtx.fillStyle = "#fff";
-  myGameCtx.font = "bold 12px Arial";
-  myGameCtx.textAlign = "center";
-  myGameCtx.fillText("E", myPlayerX, myPlayerY + 4);
-
-  if (myCollectedCount >= 3) {
-    myGameCtx.fillStyle = "rgba(0,0,0,0.6)";
-    myGameCtx.fillRect(0, 120, 400, 60);
-    myGameCtx.fillStyle = "#fff";
-    myGameCtx.font = "bold 20px Arial";
-    myGameCtx.textAlign = "center";
-    myGameCtx.fillText("All treasures collected!", 200, 155);
-  }
-}
-
-// ---------- Main Loop ----------
-function myProcessingLoop(timestamp) {
-  const delta = myLastFrameTime ? timestamp - myLastFrameTime : 16;
-  myLastFrameTime = timestamp;
-
-  const features = myExtractFeatures();
-  if (features && myIsTraining) {
-    myCollectSample(features);
-  }
-  if (features) {
-    myPredict(features);
-  }
-
-  myUpdateGame(delta);
-  myDrawGame();
-
-  myAnimationFrameId = requestAnimationFrame(myProcessingLoop);
-}
-
-function myStartProcessingLoop() {
-  if (myAnimationFrameId !== null) return;
-  myAnimationFrameId = requestAnimationFrame(myProcessingLoop);
-}
-
-// ---------- Event Listeners ----------
-myActivateBtn.addEventListener("click", myActivateCamera);
-myStopBtn.addEventListener("click", myStopCamera);
-myClearBtn.addEventListener("click", myClearTraining);
-mySaveBtn.addEventListener("click", mySaveModel);
-myLoadBtn.addEventListener("click", () => myLoadInput.click());
-myLoadInput.addEventListener("change", myLoadModel);
-
-myStartBtn.addEventListener("click", myStartGame);
-myPauseBtn.addEventListener("click", myPauseGame);
-myResetBtn.addEventListener("click", myResetGame);
-
-mySpeedInput.addEventListener("input", function () {
-  const val = parseInt(this.value, 10);
-  if (!isNaN(val) && val >= 1 && val <= 20) {
-    myBaseSpeed = val;
-    mySpeedDisplayEl.textContent = val;
-  }
-});
-
-// Training buttons with pointer events for hold-to-train
-document.querySelectorAll(".myTrainBtn").forEach(btn => {
-  const cls = btn.dataset.class;
-  btn.addEventListener("pointerdown", (e) => {
-    e.preventDefault();
-    myStartTraining(cls);
-  });
-  btn.addEventListener("pointerup", myStopTraining);
-  btn.addEventListener("pointerleave", myStopTraining);
-  btn.addEventListener("pointercancel", myStopTraining);
-});
-
-// Keyboard
-window.addEventListener("keydown", (e) => { myKeys[e.key] = true; });
-window.addEventListener("keyup", (e) => { myKeys[e.key] = false; });
-
-// Initial setup
-myUpdateSampleCounts();
-myResetGame();
-myStartProcessingLoop(); // game can still run with keyboard even before camera
+    // Initial draw
+    myResetGame();
+    myUpdateCounters();
+  </script>
+</body>
+</html>
