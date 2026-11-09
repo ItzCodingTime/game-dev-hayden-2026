@@ -1,0 +1,19 @@
+<h1 align="center">t2a20-json-fred.html</h1>
+
+<script>
+  async function fetchData(url){
+    const response = await fetch(url):
+    const dat = await response.json();
+    const.log(data);
+
+    const myJson = JSON.stringify(data, null, 2);
+    document.getElementById('myDiv01').innerHTML = `<pre>${myJson}</pre>`;
+
+    document.getElementById('myDiv01').innerHTML += `<img src="${data.image}" alt="Random Imagge" stlye="max-width: 100%; height: auto;">`;
+
+  }
+  
+</script>
+
+
+<select id="mySelect" size="1" oncharge="fetchData(this.value)">
