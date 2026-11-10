@@ -1,23 +1,45 @@
 <h1 align="center">t2a20-json-fred.html</h1>
 
 <script>
-  async function fetchData(url){
-    const response = await fetch(url):
-    const dat = await response.json();
-    const.log(data);
+  async function fetchData(url) {
+    const output = document.getElementById('myDiv01');
 
-    const myJson = JSON.stringify(data, null, 2);
-    document.getElementById('myDiv01').innerHTML = `<pre>${myJson}</pre>`;
+    if (!url) {
+      output.innerHTML = "Please choose an option.";
+      return;
+    }
 
-    document.getElementById('myDiv01').innerHTML += `<img src="${data.image}" alt="Random Imagge" stlye="max-width: 100%; height: auto;">`;
+    try {
+      const response = await fetch(url);
 
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      console.log(data);
+
+      const myJson = JSON.stringify(data, null, 2);
+      output.innerHTML = `<pre>${myJson}</pre>`;
+
+      if (data.image) {
+        output.innerHTML += `
+          <img
+            src="${data.image}"
+            alt="Random image"
+            style="max-width: 100%; height: auto;"
+          >
+        `;
+      }
+    } catch (error) {
+      console.error("Failed to fetch data:", error);
+      output.innerHTML = `<p style="color: red;">Error loading data.</p>`;
+    }
   }
-  
 </script>
 
-
-<select id="mySelect" size="1" oncharge="fetchData(this.value)">
-  <option ></option>
+<select id="mySelect" size="1" onchange="fetchData(this.value)">
+  <option value="">Select a source</option>
   <option value="https://randomfox.ca/floof/">randomfox</option>
 </select><br><br>
 
