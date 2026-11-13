@@ -1,29 +1,41 @@
-<h1 align=center>t2a20-sort-fred.html</h1>
+<h1 align="center">t2a20-sort-fred.html</h1>
 
 <script>
-  let myMax = 3      // 52 when working
-  let myCards = new Array(myMax)
+  const myMax = 10; // change to 52 when working
+  let myCards = [];
+
+  function setRandomCards() {
+    myCards = Array.from({ length: myMax }, () =>
+      Math.floor(Math.random() * 10)
+    );
+    renderCards();
+  }
+
+  function renderCards() {
+    let output = "";
+    for (let i = 0; i < myCards.length; i++) {
+      output += i + " = " + myCards[i] + "<br>";
+    }
+    document.getElementById("myDiv01").innerHTML = output;
+  }
+
+  function sortCards() {
+    // Bubble sort
+    for (let i = 0; i < myCards.length - 1; i++) {
+      for (let j = 0; j < myCards.length - 1 - i; j++) {
+        if (myCards[j] > myCards[j + 1]) {
+          const temp = myCards[j];
+          myCards[j] = myCards[j + 1];
+          myCards[j + 1] = temp;
+        }
+      }
+    }
+    renderCards();
+  }
 </script>
 
-<input type=button value="Set Random" onclick="{
-  for ( let myLoop = 0;  myLoop < myMax;  myLoop++){
-     myCards[myLoop] = Math.floor(Math.random()*10)
-  }
-}">
-
-<input type=button value="Show" onclick="{
-  let myTemp = ''
-  for ( let myLoop = 0;  myLoop < myMax;  myLoop++){
-     myTemp + myLoop + ' = '+ myCards[myLoop] + '<br>'
-  }
-   document.getElementById('myDiv01').innerHTML = myTemp
-}">
-
-<input type=button value="Sort" onclick="{
-  let myTemp = 0
-  for ( let myLoop = 0;  myLoop < myMax;  myLoop++){
-     myCards[myLoop] = 0 // you do this stuff
-  }
-}">
+<input type="button" value="Set Random" onclick="setRandomCards()">
+<input type="button" value="Show" onclick="renderCards()">
+<input type="button" value="Sort" onclick="sortCards()">
 
 <div id="myDiv01">...</div>
