@@ -1,25 +1,59 @@
-<h1 align=center>t2a21-syp-by-fred.html</h1>
-<textarea id="myArea01" rows=4 cols=70>Hello how are you</textarea>
+<h1 align="center">Simple Text Encryptor</h1>
 
+<textarea id="myArea01" rows="4" cols="70">Hello how are you</textarea>
 
-<input type=button value="encrypt" onclick="{
-  let myTemp = ''
-  myString = document.getElementById('myArea01').value.toLowerCase().split('')
-  for (let myLoop=0;   myLoop < myString.length; myLoop++){
-     mytemp = myString[myLoop]
-     if (myString[myLoop] == 'e') {myTemp  = 'f'}
-     if (myString[myLoop] == 'h') {myTemp  = 'i'}
-     mySttring[myLoop] = myTemp
-  }
-  document.getElementById('myArea02').value = myString.join('')
-}"><br><br>
+<input
+  type="button"
+  value="Encrypt"
+  onclick="encryptText()"
+>
+<br><br>
 
+<textarea id="myArea02" rows="4" cols="70" readonly></textarea>
 
+<input
+  type="button"
+  value="Decrypt"
+  onclick="decryptText()"
+>
+<br><br>
 
-<textarea id="myArea02" rows=4 cols=70></textarea>
+<textarea
+  id="myArea03"
+  rows="4"
+  cols="70"
+  readonly
+></textarea>
 
-<input type=button value="decrypt" onclick="{
-  alert('Sorry, you have to do this!')
-}"><br><br>
+<script>
+function encryptText() {
+  const text = document.getElementById("myArea01").value.toLowerCase()
 
-<textarea id="myArea03" rows=4 cols=70></textarea><br>
+  const encrypted = text
+    .split("")
+    .map(character => {
+      if (character === "e") return "f"
+      if (character === "h") return "i"
+      return character
+    })
+    .join("")
+
+  document.getElementById("myArea02").value = encrypted
+  document.getElementById("myArea03").value = ""
+}
+
+function decryptText() {
+  const text = document.getElementById("myArea02").value.toLowerCase()
+
+  const decrypted = text
+    .split("")
+    .map(character => {
+      if (character === "f") return "e"
+      if (character === "i") return "h"
+      return character
+    })
+    .join("")
+
+  document.getElementById("myArea03").value = decrypted
+}
+</script>
