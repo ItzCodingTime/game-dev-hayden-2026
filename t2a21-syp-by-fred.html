@@ -1,59 +1,97 @@
-<h1 align="center">Simple Text Encryptor</h1>
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Simple Text Encryptor</title>
 
-<textarea id="myArea01" rows="4" cols="70">Hello how are you</textarea>
+  <style>
+    body {
+      max-width: 700px;
+      margin: 2rem auto;
+      font-family: sans-serif;
+    }
 
-<input
-  type="button"
-  value="Encrypt"
-  onclick="encryptText()"
->
-<br><br>
+    textarea {
+      width: 100%;
+      box-sizing: border-box;
+      margin: 0.5rem 0;
+    }
 
-<textarea id="myArea02" rows="4" cols="70" readonly></textarea>
+    button {
+      margin-bottom: 1rem;
+      padding: 0.5rem 1rem;
+    }
+  </style>
+</head>
 
-<input
-  type="button"
-  value="Decrypt"
-  onclick="decryptText()"
->
-<br><br>
+<body>
+  <h1>Simple Text Encryptor</h1>
 
-<textarea
-  id="myArea03"
-  rows="4"
-  cols="70"
-  readonly
-></textarea>
+  <label for="inputText">Text to encrypt</label>
+  <textarea id="inputText" rows="4">Hello how are you</textarea>
 
-<script>
-function encryptText() {
-  const text = document.getElementById("myArea01").value.toLowerCase()
+  <button id="encryptButton" type="button">Encrypt</button>
 
-  const encrypted = text
-    .split("")
-    .map(character => {
-      if (character === "e") return "f"
-      if (character === "h") return "i"
-      return character
+  <label for="encryptedText">Encrypted text</label>
+  <textarea id="encryptedText" rows="4" readonly></textarea>
+
+  <button id="decryptButton" type="button">Decrypt</button>
+
+  <label for="decryptedText">Decrypted text</label>
+  <textarea id="decryptedText" rows="4" readonly></textarea>
+
+  <p id="message" role="status"></p>
+
+  <script>
+    const inputText = document.querySelector("#inputText")
+    const encryptedText = document.querySelector("#encryptedText")
+    const decryptedText = document.querySelector("#decryptedText")
+    const message = document.querySelector("#message")
+
+    // Replacing characters directly can lose information. Text is instead
+    // reversed and transformed into a predictable character-code format.
+    function encryptText(text) {
+      if (!text.trim()) {
+        throw new Error("Enter text before encrypting.")
+      }
+
+      return Array.from(text)
+        .reverse()
+        .map(character => character.charCodeAt(0).toString(16).padStart(4, "0"))
+        .join("-")
+    }
+
+    function decryptText(text) {
+      if (!text.trim()) {
+        throw new Error("Enter encrypted text before decrypting.")
+      }
+
+      return text
+        .split("-")
+        .map(value => String.fromCharCode(Number.parseInt(value, 16)))
+        .reverse()
+        .join("")
+    }
+
+    document.querySelector("#encryptButton").addEventListener("click", () => {
+      try {
+        encryptedText.value = encryptText(inputText.value)
+        decryptedText.value = ""
+        message.textContent = "Text encrypted."
+      } catch (error) {
+        message.textContent = error.message
+      }
     })
-    .join("")
 
-  document.getElementById("myArea02").value = encrypted
-  document.getElementById("myArea03").value = ""
-}
-
-function decryptText() {
-  const text = document.getElementById("myArea02").value.toLowerCase()
-
-  const decrypted = text
-    .split("")
-    .map(character => {
-      if (character === "f") return "e"
-      if (character === "i") return "h"
-      return character
+    document.querySelector("#decryptButton").addEventListener("click", () => {
+      try {
+        decryptedText.value = decryptText(encryptedText.value)
+        message.textContent = "Text decrypted."
+      } catch (error) {
+        message.textContent = "Unable to decrypt this text."
+      }
     })
-    .join("")
-
-  document.getElementById("myArea03").value = decrypted
-}
-</script>
+  </script>
+</body>
+</html>
