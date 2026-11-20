@@ -16,3 +16,10 @@ Click the button to draw basic shapes, then ask AI to help you add more!<br><br>
   // 3. Draw a solid Rectangle
   myContext.fillStyle = 'blue';
   myContext.fillRect(30, 50, 100, 60); // (x, y, radius, start, end)
+
+  // 4. Draw a Circle
+  myContext.beginPath();
+  myContext.lineWidth = 5;
+  myContext.strokeStyle = 'green';
+  myContext.arc(220, 80, 40, 0, 2 * Math,PI); // (x, y, radius, start, end)
+  myContext.stroke();
