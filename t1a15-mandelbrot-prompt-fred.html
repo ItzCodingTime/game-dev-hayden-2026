@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>t1a15-mandelbrot-prompt-fred</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      background-color: black;
+      color: white;
+      overflow: hidden;
+    }
+
+    h1 {
+      text-align: center;
+      margin: 8px 0;
+      font-size: 18px;
+    }
+
+    #myHintBox {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      background-color: #333;
+      color: #00ff00;
+      padding: 6px 10px;
+      cursor: pointer;
+      border: 1px solid #00ff00;
+      font-size: 14px;
+      z-index: 5;
+    }
+
+    #myModal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.85);
+      z-index: 10;
+    }
+
+    #myModalContent {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background-color: #111;
+      color: white;
+      padding: 20px;
+      border: 2px solid #00ff00;
+      max-width: 460px;
+      font-family: Arial, sans-serif;
+    }
+
+    #myModalContent button {
+      margin-top: 12px;
+      padding: 6px 14px;
+      background-color: #00ff00;
+      color: black;
+      border: none;
+      cursor: pointer;
+    }
+
+    canvas {
+      display: block;
+      background-color: black;
+    }
+  </style>
+</head>
+<body>
+  <h1 align="center">t1a15-mandelbrot-prompt-fred.html</h1>
+
+  <div id="myHintBox">Click here for fractal info</div>
+
+  <canvas id="myCanvas"></canvas>
+
+  <div id="myModal">
+    <div id="myModalContent">
+      <h2>How the Mandelbrot is generated</h2>
+      <p>The fractal uses the formula:</p>
+      <p><i>Z<sub>n+1</sub> = Z<sub>n</sub><sup>2</sup> + C</i></p>
+      <p>
+        Start with Z = 0. For each pixel, C is its complex coordinate.
+        Keep applying the formula. If Z stays small, the point is in the set (black).
+        Otherwise color it by how fast it escapes. This creates the smooth colorful bands.
+      </p>
+      <p>Move the mouse to see the dashed preview box. Use the wheel to change its size. Click to zoom into that region.</p>
+      <input type="button" value="Close" id="myCloseButton">
+    </div>
+  </div>
+
+  <script>
+    let myCanvas = document.getElementById("myCanvas");
+    let myCtx = myCanvas.getContext("2d");
+    let myOffscreenCanvas = document.createElement("canvas");
+    let myOffscreenCtx = myOffscreenCanvas.getContext("2d");
+
+    let myCenterReal = -0.5;
+    let myCenterImag = 0.0;
+    let myScale = 2.5;
+    let myMaxIterations = 180;
+    let myZoomFactor = 0.5;
+
+    let myMouseX = 400;
+    let myMouseY = 300;
+    let myIsModalOpen = false;
+
+    function myResizeCanvases() {
+      myCanvas.width = window.innerWidth;
+      myCanvas.height = window.innerHeight - 40;
+      myOffscreenCanvas.width = myCanvas.width;
+      myOffscreenCanvas.height = myCanvas.height;
+    }
+
+    function myHueToRgb(hue) {
+      let h = hue / 60;
+      let c = 1;
+      let x = c * (1 - Math.abs((h % 2) - 1));
+      let r = 0, g = 0, b = 0;
+      if (h < 1) { r = c; g = x; }
+      else if (h < 2) { r = x; g = c; }
+      else if (h < 3) { g = c; b = x; }
+      else if (h < 4) { g = x; b = c; }
+      else if (h < 5) { r = x; b = c; }
+      else { r = c; b = x; }
+      return [Math.floor(r * 255), Math.floor(g * 255), Math.floor(b * 255)];
+    }
+
+    async function myRenderFractal() {
+      let width = myOffscreenCanvas.width;
+      let height = myOffscreenCanvas.height;
+      let imageData = myOffscreenCtx.createImageData(width, height);
+      let data = imageData.data;
+
+      let aspect = width / height;
+      let halfWidth = myScale;
+      let halfHeight = myScale / aspect;
+
+      let minReal = myCenterReal - halfWidth;
+      let maxReal = myCenterReal + halfWidth;
+      let minImag = myCenterImag - halfHeight;
+      let maxImag = myCenterImag + halfHeight;
+
+      let realStep = (maxReal - minReal) / width;
+      let imagStep = (maxImag - minImag) / height;
+
+      for (let py = 0; py < height; py++) {
+        let imag = maxImag - py * imagStep;
+        for (let px = 0; px < width; px++) {
+          let real = minReal + px * realStep;
+          let zr = 0;
+          let zi = 0;
+          let iteration = 0;
+
+          while (zr * zr + zi * zi <= 4 && iteration < myMaxIterations) {
+            let temp = zr * zr - zi * zi + real;
+            zi = 2 * zr * zi + imag;
+            zr = temp;
+            iteration++;
+          }
+
+          let index = (py * width + px) * 4;
+
+          if (iteration === myMaxIterations) {
+            data[index] = 0;
+            data[index + 1] = 0;
+            data[index + 2] = 0;
+          } else {
+            let logZn = Math.log(zr * zr + zi * zi) / 2;
+            let nu = Math.log(logZn / Math.log(2)) / Math.log(2);
+            let smoothIter = iteration + 1 - nu;
+            let hue = (smoothIter * 12) % 360;
+            let rgb = myHueToRgb(hue);
+            data[index] = rgb[0];
+            data[index + 1] = rgb[1];
+            data[index + 2] = rgb[2];
+          }
+          data[index + 3] = 255;
+        }
+      }
+
+      myOffscreenCtx.putImageData(imageData, 0, 0);
+      await new Promise(resolve => setTimeout(resolve, 0));
+      myDrawOverlay();
+    }
+
+    function myDrawOverlay() {
+      myCtx.drawImage(myOffscreenCanvas, 0, 0);
+
+      if (myIsModalOpen) return;
+
+      let boxW = myCanvas.width * myZoomFactor;
+      let boxH = myCanvas.height * myZoomFactor;
+      let left = myMouseX - boxW / 2;
+      let top = myMouseY - boxH / 2;
+
+      myCtx.save();
+      myCtx.strokeStyle = "#00ff00";
+      myCtx.lineWidth = 2;
+      myCtx.setLineDash([6, 5]);
+      myCtx.strokeRect(left, top, boxW, boxH);
+      myCtx.restore();
+    }
+
+    function myHandleMouseMove(event) {
+      let rect = myCanvas.getBoundingClientRect();
+      myMouseX = event.clientX - rect.left;
+      myMouseY = event.clientY - rect.top;
+      myDrawOverlay();
+    }
+
+    function myHandleWheel(event) {
+      event.preventDefault();
+      let delta = event.deltaY > 0 ? 1.12 : 0.88;
+      myZoomFactor = Math.max(0.08, Math.min(0.85, myZoomFactor * delta));
+      myDrawOverlay();
+    }
+
+    async function myHandleClick(event) {
+      if (myIsModalOpen) return;
+
+      let rect = myCanvas.getBoundingClientRect();
+      let clickX = event.clientX - rect.left;
+      let clickY = event.clientY - rect.top;
+
+      let aspect = myCanvas.width / myCanvas.height;
+      let halfWidth = myScale;
+      let halfHeight = myScale / aspect;
+
+      let minReal = myCenterReal - halfWidth;
+      let maxReal = myCenterReal + halfWidth;
+      let minImag = myCenterImag - halfHeight;
+      let maxImag = myCenterImag + halfHeight;
+
+      let real = minReal + (clickX / myCanvas.width) * (maxReal - minReal);
+      let imag = maxImag - (clickY / myCanvas.height) * (maxImag - minImag);
+
+      myCenterReal = real;
+      myCenterImag = imag;
+      myScale *= myZoomFactor;
+
+      myMaxIterations = Math.min(800, Math.floor(myMaxIterations * 1.12));
+
+      await myRenderFractal();
+    }
+
+    function myToggleModal() {
+      myIsModalOpen = !myIsModalOpen;
+      document.getElementById("myModal").style.display = myIsModalOpen ? "block" : "none";
+      if (!myIsModalOpen) myDrawOverlay();
+    }
+
+    function myCloseModal() {
+      myIsModalOpen = false;
+      document.getElementById("myModal").style.display = "none";
+      myDrawOverlay();
+    }
+
+    myResizeCanvases();
+    window.onresize = async function () {
+      myResizeCanvases();
+      await myRenderFractal();
+    };
+
+    myCanvas.onmousemove = myHandleMouseMove;
+    myCanvas.onwheel = myHandleWheel;
+    myCanvas.onclick = myHandleClick;
+
+    document.getElementById("myHintBox").onclick = myToggleModal;
+    document.getElementById("myCloseButton").onclick = myCloseModal;
+
+    (async function myInit() {
+      await myRenderFractal();
+    })();
+  </script>
+</body>
+</html>
