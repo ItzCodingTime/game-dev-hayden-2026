@@ -3,44 +3,84 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>t1a15-mandelbrot-prompt-fred</title>
+  <title>Mandelbrot Explorer</title>
   <style>
-    body {
+    :root {
+      color-scheme: dark;
       font-family: Arial, sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
       margin: 0;
-      background-color: black;
-      color: white;
+      background: #000;
+      color: #fff;
       overflow: hidden;
     }
 
     h1 {
-      text-align: center;
-      margin: 8px 0;
+      height: 40px;
+      margin: 0;
+      display: grid;
+      place-items: center;
       font-size: 18px;
     }
 
     #myHintBox {
       position: absolute;
-      top: 10px;
+      top: 50px;
       left: 10px;
-      background-color: #333;
-      color: #00ff00;
-      padding: 6px 10px;
-      cursor: pointer;
-      border: 1px solid #00ff00;
-      font-size: 14px;
       z-index: 5;
+      padding: 6px 10px;
+      border: 1px solid #00ff00;
+      background: #222;
+      color: #00ff00;
+      cursor: pointer;
+    }
+
+    #controls {
+      position: absolute;
+      top: 50px;
+      right: 10px;
+      z-index: 5;
+      display: flex;
+      gap: 6px;
+    }
+
+    button {
+      padding: 7px 10px;
+      border: 1px solid #00ff00;
+      background: #111;
+      color: #00ff00;
+      cursor: pointer;
+    }
+
+    button:hover,
+    button:focus-visible,
+    #myHintBox:hover,
+    #myHintBox:focus-visible {
+      background: #00ff00;
+      color: #000;
+    }
+
+    canvas {
+      display: block;
+      width: 100%;
+      height: calc(100vh - 40px);
+      background: #000;
+      cursor: crosshair;
+      touch-action: none;
     }
 
     #myModal {
       display: none;
       position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background-color: rgba(0, 0, 0, 0.85);
+      inset: 0;
       z-index: 10;
+      background: rgba(0, 0, 0, 0.85);
     }
 
     #myModalContent {
@@ -48,234 +88,405 @@
       top: 50%;
       left: 50%;
       transform: translate(-50%, -50%);
-      background-color: #111;
-      color: white;
+      width: min(460px, calc(100% - 40px));
+      max-height: calc(100vh - 40px);
+      overflow: auto;
       padding: 20px;
       border: 2px solid #00ff00;
-      max-width: 460px;
-      font-family: Arial, sans-serif;
+      background: #111;
     }
 
-    #myModalContent button {
-      margin-top: 12px;
-      padding: 6px 14px;
-      background-color: #00ff00;
-      color: black;
-      border: none;
-      cursor: pointer;
-    }
-
-    canvas {
-      display: block;
-      background-color: black;
+    #status {
+      position: absolute;
+      right: 10px;
+      bottom: 10px;
+      z-index: 4;
+      padding: 5px 8px;
+      background: rgba(0, 0, 0, 0.75);
+      font-size: 12px;
+      pointer-events: none;
     }
   </style>
 </head>
 <body>
-  <h1 align="center">t1a15-mandelbrot-prompt-fred.html</h1>
+  <h1>Mandelbrot Explorer</h1>
 
-  <div id="myHintBox">Click here for fractal info</div>
+  <div id="myHintBox" role="button" tabindex="0">Fractal information</div>
 
-  <canvas id="myCanvas"></canvas>
+  <div id="controls" aria-label="Fractal controls">
+    <button id="zoomOut" type="button">Zoom out</button>
+    <button id="reset" type="button">Reset</button>
+  </div>
 
-  <div id="myModal">
+  <canvas id="myCanvas" aria-label="Interactive Mandelbrot fractal"></canvas>
+  <div id="status" aria-live="polite"></div>
+
+  <div id="myModal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
     <div id="myModalContent">
-      <h2>How the Mandelbrot is generated</h2>
-      <p>The fractal uses the formula:</p>
+      <h2 id="modalTitle">How the Mandelbrot set is generated</h2>
+      <p>For each pixel, use the complex coordinate as <i>C</i> and repeatedly calculate:</p>
       <p><i>Z<sub>n+1</sub> = Z<sub>n</sub><sup>2</sup> + C</i></p>
       <p>
-        Start with Z = 0. For each pixel, C is its complex coordinate.
-        Keep applying the formula. If Z stays small, the point is in the set (black).
-        Otherwise color it by how fast it escapes. This creates the smooth colorful bands.
+        Start with Z = 0. Points that remain bounded are in the set and
+        appear dark. Other points receive a color based on how quickly
+        they escape.
       </p>
-      <p>Move the mouse to see the dashed preview box. Use the wheel to change its size. Click to zoom into that region.</p>
-      <input type="button" value="Close" id="myCloseButton">
+      <p>Move the mouse or drag a pointer to position the dashed preview box. Scroll or pinch to resize it, then click or tap to zoom.</p>
+      <button id="myCloseButton" type="button">Close</button>
     </div>
   </div>
 
   <script>
-    let myCanvas = document.getElementById("myCanvas");
-    let myCtx = myCanvas.getContext("2d");
-    let myOffscreenCanvas = document.createElement("canvas");
-    let myOffscreenCtx = myOffscreenCanvas.getContext("2d");
+    "use strict";
 
-    let myCenterReal = -0.5;
-    let myCenterImag = 0.0;
-    let myScale = 2.5;
-    let myMaxIterations = 180;
-    let myZoomFactor = 0.5;
+    const canvas = document.getElementById("myCanvas");
+    const ctx = canvas.getContext("2d", { alpha: false });
+    const offscreenCanvas = document.createElement("canvas");
+    const offscreenCtx = offscreenCanvas.getContext("2d", { alpha: false });
 
-    let myMouseX = 400;
-    let myMouseY = 300;
-    let myIsModalOpen = false;
+    const hintBox = document.getElementById("myHintBox");
+    const modal = document.getElementById("myModal");
+    const closeButton = document.getElementById("myCloseButton");
+    const status = document.getElementById("status");
+    const resetButton = document.getElementById("reset");
+    const zoomOutButton = document.getElementBy4d("zoomOut");
 
-    function myResizeCanvases() {
-      myCanvas.width = window.innerWidth;
-      myCanvas.height = window.innerHeight - 40;
-      myOffscreenCanvas.width = myCanvas.width;
-      myOffscreenCanvas.height = myCanvas.height;
+    const initialView = {
+      centerReal: -0.5,
+      centerImag: 0,
+      scale: 2.5,
+      iterations: 180
+    };
+
+    let centerReal = initialView.centerReal;
+    let centerImag = initialView.centerImag;
+    let scale = initialView.scale;
+    let maxIterations = initialView.iterations;
+    let zoomFactor = 0.5;
+    let mouseX = 400;
+    let mouseY = 300;
+    let isModalOpen = false;
+    let isRendering = false;
+    let renderQueued = false;
+    let activePointers = new Map();
+    let previousPinchDistance = null;
+
+    function resizeCanvases() {
+      const rect = canvas.getBoundingClientRect();
+      const pixelRatio = Math.min(window.devicePixelRatio || 1, 2);
+      const width = Math.max(1, Math.round(rect.width * pixelRatio));
+      const height = Math.max(1, Math.round(rect.height * pixelRatio));
+
+      if (canvas.width !== width || canvas.height !== height) {
+        canvas.width = width;
+        canvas.height = height;
+        offscreenCanvas.width = width;
+        offscreenCanvas.height = height;
+        mouseX = width / 2;
+        mouseY = height / 2;
+        queueRender();
+      }
     }
 
-    function myHueToRgb(hue) {
-      let h = hue / 60;
-      let c = 1;
-      let x = c * (1 - Math.abs((h % 2) - 1));
-      let r = 0, g = 0, b = 0;
-      if (h < 1) { r = c; g = x; }
-      else if (h < 2) { r = x; g = c; }
-      else if (h < 3) { g = c; b = x; }
-      else if (h < 4) { g = x; b = c; }
-      else if (h < 5) { r = x; b = c; }
-      else { r = c; b = x; }
-      return [Math.floor(r * 255), Math.floor(g * 255), Math.floor(b * 255)];
+    function hueToRgb(hue) {
+      hue = ((hue % 360) + 360) % 360;
+      const h = hue / 60;
+      const c = 1;
+      const x = c * (1 - Math.abs((h % 2) - 1));
+      let r = 0;
+      let g = 0;
+      let b = 0;
+
+      if (h < 1) r = c, g = x;
+      else if (h < 2) r = x, g = c;
+      else if (h < 3) g = c, b = x;
+      else if (h < 4) g = x, b = c;
+      else if (h < 5) r = x, b = c;
+      else r = c, b = x;
+
+      return [
+        Math.round(r * 255),
+        Math.round(g * 255),
+        Math.round(b * 255)
+      ];
     }
 
-    async function myRenderFractal() {
-      let width = myOffscreenCanvas.width;
-      let height = myOffscreenCanvas.height;
-      let imageData = myOffscreenCtx.createImageData(width, height);
-      let data = imageData.data;
+    function paletteSmooth(iteration, zr, zi) {
+      if (iteration >= maxIterations) {
+        return [0, 0, 0];
+      }
 
-      let aspect = width / height;
-      let halfWidth = myScale;
-      let halfHeight = myScale / aspect;
+      const logZn = Math.log(zr * zr + zi * zi) / 2;
+      const nu = Math.log(Math.max(logZn / Math.log(2), 1e-12)) / Math.log(2);
+      const smooth = iteration + 1 - nu;
+      return hueToRgb(smooth * 12);
+    }
 
-      let minReal = myCenterReal - halfWidth;
-      let maxReal = myCenterReal + halfWidth;
-      let minImag = myCenterImag - halfHeight;
-      let maxImag = myCenterImag + halfHeight;
+    async function renderFractal() {
+      if (isRendering) {
+        renderQueued = true;
+        return;
+      }
 
-      let realStep = (maxReal - minReal) / width;
-      let imagStep = (maxImag - minImag) / height;
+      isRendering = true;
+      status.textContent = "Rendering…";
+
+      const width = offscreenCanvas.width;
+      const height = offscreenCanvas.height;
+      const imageData = offscreenCtx.createImageData(width, height);
+      const data = imageData.data;
+
+      const aspect = width / height;
+      const halfWidth = scale;
+      const halfHeight = scale / aspect;
+      const minReal = centerReal - halfWidth;
+      const maxReal = centerReal + halfWidth;
+      const minImag = centerImag - halfHeight;
+      const maxImag = centerImag + halfHeight;
+      const realStep = (maxReal - minReal) / width;
+      const imagStep = (maxImag - minImag) / height;
+
+      const chunkSize = 12;
 
       for (let py = 0; py < height; py++) {
-        let imag = maxImag - py * imagStep;
+        const imag = maxImag - py * imagStep;
+
         for (let px = 0; px < width; px++) {
-          let real = minReal + px * realStep;
+          const real = minReal + px * realStep;
           let zr = 0;
           let zi = 0;
+          let zrSquared = 0;
+          let ziSquared = 0;
           let iteration = 0;
 
-          while (zr * zr + zi * zi <= 4 && iteration < myMaxIterations) {
-            let temp = zr * zr - zi * zi + real;
+          while (zrSquared + ziSquared <= 4 && iteration < maxIterations) {
             zi = 2 * zr * zi + imag;
-            zr = temp;
+            zr = zrSquared - ziSquared + real;
+            zrSquared = zr * zr;
+            ziSquared = zi * zi;
             iteration++;
           }
 
-          let index = (py * width + px) * 4;
-
-          if (iteration === myMaxIterations) {
-            data[index] = 0;
-            data[index + 1] = 0;
-            data[index + 2] = 0;
-          } else {
-            let logZn = Math.log(zr * zr + zi * zi) / 2;
-            let nu = Math.log(logZn / Math.log(2)) / Math.log(2);
-            let smoothIter = iteration + 1 - nu;
-            let hue = (smoothIter * 12) % 360;
-            let rgb = myHueToRgb(hue);
-            data[index] = rgb[0];
-            data[index + 1] = rgb[1];
-            data[index + 2] = rgb[2];
-          }
+          const index = (py * width + px) * 4;
+          const rgb = paletteSmooth(iteration, zr, zi);
+          data[index] = rgb[0];
+          data[index + 1] = rgb[1];
+          data[index + 2] = rgb[2];
           data[index + 3] = 255;
+        }
+
+        if (py % chunkSize === 0) {
+          await new Promise(resolve => setTimeout(resolve, 0));
         }
       }
 
-      myOffscreenCtx.putImageData(imageData, 0, 0);
-      await new Promise(resolve => setTimeout(resolve, 0));
-      myDrawOverlay();
+      offscreenCtx.putImageData(imageData, 0, 0);
+      drawOverlay();
+      isRendering = false;
+
+      status.textContent =
+        `Zoom: ${(initialView.scale / scale).toFixed(1)}× · Iterations: ${maxIterations}`;
+
+      if (renderQueued) {
+        renderQueued = false;
+        await renderFractal();
+      }
     }
 
-    function myDrawOverlay() {
-      myCtx.drawImage(myOffscreenCanvas, 0, 0);
-
-      if (myIsModalOpen) return;
-
-      let boxW = myCanvas.width * myZoomFactor;
-      let boxH = myCanvas.height * myZoomFactor;
-      let left = myMouseX - boxW / 2;
-      let top = myMouseY - boxH / 2;
-
-      myCtx.save();
-      myCtx.strokeStyle = "#00ff00";
-      myCtx.lineWidth = 2;
-      myCtx.setLineDash([6, 5]);
-      myCtx.strokeRect(left, top, boxW, boxH);
-      myCtx.restore();
+    function queueRender() {
+      if (!isRendering) {
+        renderFractal();
+      } else {
+        renderQueued = true;
+      }
     }
 
-    function myHandleMouseMove(event) {
-      let rect = myCanvas.getBoundingClientRect();
-      myMouseX = event.clientX - rect.left;
-      myMouseY = event.clientY - rect.top;
-      myDrawOverlay();
+    function drawOverlay() {
+      ctx.drawImage(offscreenCanvas, 0, 0);
+
+      if (isModalOpen) return;
+
+      const boxW = canvas.width * zoomFactor;
+      const boxH = canvas.height * zoomFactor;
+      const left = mouseX - boxW / 2;
+      const top = mouseY - boxH / 2;
+
+      ctx.save();
+      ctx.strokeStyle = "#00ff00";
+      ctx.lineWidth = 2;
+      ctx.setLineDash([6, 5]);
+      ctx.shadowColor = "#000";
+      ctx.shadowBlur = 3;
+      ctx.strokeRect(left, top, boxW, boxH);
+      ctx.restore();
     }
 
-    function myHandleWheel(event) {
+    function getPointerPosition(event) {
+      const rect = canvas.getBoundingClientRect();
+      return {
+        x: (event.clientX - rect.left) * canvas.width / rect.width,
+        y: (event.clientY - rect.top) * canvas.height / rect.height
+      };
+    }
+
+    function zoomAt(x, y) {
+      if (isRendering) return;
+
+      const aspect = canvas.width / canvas.height;
+      const halfWidth = scale;
+      const halfHeight = scale / aspect;
+      const minReal = centerReal - halfWidth;
+      const maxReal = centerReal + halfWidth;
+      const minImag = centerImag - halfHeight;
+      const maxImag = centerImag + halfHeight;
+
+      centerReal = minReal + (x / canvas.width) * (maxReal - minReal);
+      centerImag = maxImag - (y / canvas.height) * (maxImag - minImag);
+      scale *= zoomFactor;
+      maxIterations = Math.min(800, Math.floor(maxIterations * 1.12));
+
+      queueRender();
+    }
+
+    function toggleModal(open) {
+      isModalOpen = typeof open === "boolean" ? open : !isModalOpen;
+      modal.style.display = isModalOpen ? "block" : "none";
+      if (isModalOpen) {
+        closeButton.focus();
+      } else {
+        hintBox.focus();
+        drawOverlay();
+      }
+    }
+
+    function resetView() {
+      centerReal = initialView.centerReal;
+      centerImag = initialView.centerImag;
+      scale = initialView.scale;
+      maxIterations = initialView.iterations;
+      zoomFactor = 0.5;
+      queueRender();
+    }
+
+    canvas.addEventListener("pointermove", event => {
+      activePointers.set(event.pointerId, getPointerPosition(event));
+
+      if (activePointers.size === 1) {
+        const point = getPointerPosition(event);
+        mouseX = point.x;
+        mouseY = point.y;
+        drawOverlay();
+      }
+
+      if (activePointers.size === 2) {
+        const points = [...activePointers.values()];
+        const distance = Math.hypot(
+          points[0].x - points[1].x,
+          points[0].y - points[1].y
+        );
+
+        if (previousPinchDistance !== null) {
+          zoomFactor = Math.max(
+            0.08,
+            Math.min(0.85, zoomFactor * previousPinchDistance / distance)
+          );
+          drawOverlay();
+        }
+
+        previousPinchDistance = distance;
+      }
+    });
+
+    canvas.addEventListener("pointerdown", event => {
+      canvas.setPointerCapture(event.pointerId);
+      activePointers.set(event.pointerId, getPointerPosition(event));
+
+      if (activePointers.size === 1) {
+        const point = getPointerPosition(event);
+        mouseX = point.x;
+        mouseY = point.y;
+        drawOverlay();
+      }
+    });
+
+    canvas.addEventListener("pointerup", event => {
+      activePointers.delete(event.pointerId);
+      previousPinchDistance = null;
+    });
+
+    canvas.addEventListener("pointercancel", event => {
+      activePointers.delete(event.pointerId);
+      previousPinchDistance = null;
+    });
+
+    canvas.addEventListener("click", event => {
+      if (isModalOpen) return;
+      const point = getPointerPosition(event);
+      mouseX = point.x;
+      mouseY = point.y;
+      zoomAt(point.x, point.y);
+    });
+
+    canvas.addEventListener("wheel", event => {
       event.preventDefault();
-      let delta = event.deltaY > 0 ? 1.12 : 0.88;
-      myZoomFactor = Math.max(0.08, Math.min(0.85, myZoomFactor * delta));
-      myDrawOverlay();
-    }
+      const multiplier = event.deltaY > 0 ? 1.12 : 0.88;
+      zoomFactor = Math.max(0.08, Math.min(0.85, zoomFactor * multiplier));
+      drawOverlay();
+    }, { passive: false });
 
-    async function myHandleClick(event) {
-      if (myIsModalOpen) return;
+    canvas.addEventListener("keydown", event => {
+      const panAmount = 0.1;
 
-      let rect = myCanvas.getBoundingClientRect();
-      let clickX = event.clientX - rect.left;
-      let clickY = event.clientY - rect.top;
+      if (event.key === "ArrowLeft") centerReal -= scale * panAmount;
+      else if (event.key === "ArrowRight") centerReal += scale * panAmount;
+      else if (event.key === "ArrowUp") centerImag += scale * panAmount;
+      else if (event.key === "ArrowDown") centerImag -= scale * panAmount;
+      else if (event.key === "+" || event.key === "=") {
+        scale *= zoomFactor;
+        queueRender();
+        return;
+      } else if (event.key === "-" ) {
+        scale /= zoomFactor;
+        queueRender();
+        return;
+      } else {
+        return;
+      }
 
-      let aspect = myCanvas.width / myCanvas.height;
-      let halfWidth = myScale;
-      let halfHeight = myScale / aspect;
+      event.preventDefault();
+      queueRender();
+    });
 
-      let minReal = myCenterReal - halfWidth;
-      let maxReal = myCenterReal + halfWidth;
-      let minImag = myCenterImag - halfHeight;
-      let maxImag = myCenterImag + halfHeight;
+    canvas.tabIndex = 0;
 
-      let real = minReal + (clickX / myCanvas.width) * (maxReal - minReal);
-      let imag = maxImag - (clickY / myCanvas.height) * (maxImag - minImag);
+    hintBox.addEventListener("click", () => toggleModal());
+    hintBox.addEventListener("keydown", event => {
+      if (event.key === "Enter" || event.key === " ") {
+        event.preventDefault();
+        toggleModal();
+      }
+    });
 
-      myCenterReal = real;
-      myCenterImag = imag;
-      myScale *= myZoomFactor;
+    closeButton.addEventListener("click", () => toggleModal(false));
+    modal.addEventListener("click", event => {
+      if (event.target === modal) toggleModal(false);
+    });
 
-      myMaxIterations = Math.min(800, Math.floor(myMaxIterations * 1.12));
+    document.addEventListener("keydown", event => {
+      if (event.key === "Escape" && isModalOpen) {
+        toggleModal(false);
+      }
+    });
 
-      await myRenderFractal();
-    }
+    resetButton.addEventListener("click", resetView);
 
-    function myToggleModal() {
-      myIsModalOpen = !myIsModalOpen;
-      document.getElementById("myModal").style.display = myIsModalOpen ? "block" : "none";
-      if (!myIsModalOpen) myDrawOverlay();
-    }
+    zoomOutButton.addEventListener("click", () => {
+      scale = Math.min(initialView.scale, scale / zoomFactor);
+      queueRender();
+    });
 
-    function myCloseModal() {
-      myIsModalOpen = false;
-      document.getElementById("myModal").style.display = "none";
-      myDrawOverlay();
-    }
-
-    myResizeCanvases();
-    window.onresize = async function () {
-      myResizeCanvases();
-      await myRenderFractal();
-    };
-
-    myCanvas.onmousemove = myHandleMouseMove;
-    myCanvas.onwheel = myHandleWheel;
-    myCanvas.onclick = myHandleClick;
-
-    document.getElementById("myHintBox").onclick = myToggleModal;
-    document.getElementById("myCloseButton").onclick = myCloseModal;
-
-    (async function myInit() {
-      await myRenderFractal();
-    })();
+    window.addEventListener("resize", resizeCanvases);
+    resizeCanvases();
   </script>
 </body>
 </html>
