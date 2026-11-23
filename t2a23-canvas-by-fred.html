@@ -24,9 +24,17 @@ Click the button to draw basic shapes, then ask AI to help you add more!<br><br>
   myContext.arc(220, 80, 40, 0, 2 * Math,PI); // (x, y, radius, start, end)
   myContext.stroke();
 
-  // 5. 
-  myContext.;
-  myContext.;
-  myContext.;
-  myContext.;
-  myContext.;
+  // 5. Write some text
+  myContext.fillStyle = 'red';
+  myContext.font = '24px Ariel';
+  myContext.fillText('Hello World!', 30, 180); / ('text', x, y)
+}"><br><br>
+
+<!-- Smaller cavas so everything fits on 3/4 of a page -->
+<canvas id="myCoolTag" width="500" height="300" style="border:1px solid #000000;"></canvas>
+
+<script>
+  // Set up global variables
+  let myCanvas = document.getElementById('myCoolTag');
+  let myContext = myCanvas.getContext('2d');
+</script>
