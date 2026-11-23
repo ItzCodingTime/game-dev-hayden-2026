@@ -1,40 +1,74 @@
-<h2 align=center">t2a23-canvas-by-fred.html</h2>
-Click the button to draw basic shapes, then ask AI to help you add more!<br><br>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Canvas Shapes</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+    }
 
-<input type="button" value="Draw Basic Shapes" onclick="{
-  // 1. Clear the canvas frist so shapes don't overlap when clicked twice
-  myContext.clearRect(0, 0, myCanvas.width, myCanvas.height);
+    canvas {
+      border: 1px solid black;
+    }
+  </style>
+</head>
 
-  // 2. Draw a simple line
-  myContext.beginPath();
-  myContext.lineWidth = 3;
-  myContext.strokeStyle = 'black';
-  myContext.moveTo(20, 20);      // Start point (x, y)
-  myContext.lineTo(150, 20):     // End point (x, y)
-  myContext.stroke();
+<body>
+  <h2>t2a23-canvas-by-fred.html</h2>
 
-  // 3. Draw a solid Rectangle
-  myContext.fillStyle = 'blue';
-  myContext.fillRect(30, 50, 100, 60); // (x, y, radius, start, end)
+  <p>Click the button to draw basic shapes.</p>
 
-  // 4. Draw a Circle
-  myContext.beginPath();
-  myContext.lineWidth = 5;
-  myContext.strokeStyle = 'green';
-  myContext.arc(220, 80, 40, 0, 2 * Math,PI); // (x, y, radius, start, end)
-  myContext.stroke();
+  <button type="button" id="drawShapes">
+    Draw Basic Shapes
+  </button>
 
-  // 5. Write some text
-  myContext.fillStyle = 'red';
-  myContext.font = '24px Ariel';
-  myContext.fillText('Hello World!', 30, 180); / ('text', x, y)
-}"><br><br>
+  <br><br>
 
-<!-- Smaller cavas so everything fits on 3/4 of a page -->
-<canvas id="myCoolTag" width="500" height="300" style="border:1px solid #000000;"></canvas>
+  <canvas
+    id="myCoolTag"
+    width="500"
+    height="300"
+    aria-label="A canvas showing geometric shapes and text"
+  ></canvas>
 
-<script>
-  // Set up global variables
-  let myCanvas = document.getElementById('myCoolTag');
-  let myContext = myCanvas.getContext('2d');
-</script>
+  <script>
+    const canvas = document.getElementById('myCoolTag');
+    const context = canvas.getContext('2d');
+
+    function drawShapes() {
+      // Clear the canvas before drawing again.
+      context.clearRect(0, 0, canvas.width, canvas.height);
+
+      // Draw a line.
+      context.beginPath();
+      context.lineWidth = 3;
+      context.strokeStyle = 'black';
+      context.moveTo(20, 20);
+      context.lineTo(150, 20);
+      context.stroke();
+
+      // Draw a solid rectangle.
+      context.fillStyle = 'blue';
+      context.fillRect(30, 50, 100, 60);
+
+      // Draw a circle.
+      context.beginPath();
+      context.lineWidth = 5;
+      context.strokeStyle = 'green';
+      context.arc(220, 80, 40, 0, 2 * Math.PI);
+      context.stroke();
+
+      // Write text.
+      context.fillStyle = 'red';
+      context.font = '24px Arial';
+      context.fillText('Hello World!', 30, 180);
+    }
+
+    document
+      .getElementById('drawShapes')
+      .addEventListener('click', drawShapes);
+  </script>
+</body>
+</html>
