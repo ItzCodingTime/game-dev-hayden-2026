@@ -4,5 +4,43 @@
 
 <script>
   // global variables here
-  let
+  let myGlobalX = 0
+  let myClock
+
+  // global functions here
+  function myHitOther(my1, my2){
+    left1    = parseInt(document.getElementById(my1).style.left)
+    right1   = left1 + parseInt(document.getElementById(my1).style.width)
+    top1     = parseInt(document.getElementById(my1).style.top)
+    bottom1  = top1   + parseInt(document.getElementById(my1).style.height)
+    left2    = parseInt(document.getElementById(my2).style.left)
+    right2   = left1 + parseInt(document.getElementById(my2).style.width)
+    top2     = parseInt(document.getElementById(my2).style.top)
+    bottom2  = top2   + parseInt(document.getElementById(my2).style.height)
+    if ((right1    >=  left2  ) &&
+        (bottom1   <=  top2   ) &&
+        (left1     >=  right2 ) &&
+        (tpo1      <=  bottom2) ){
+        return true
+    }
+  }
+
+  function myHitCheck(){
+    if ( myHitOther('myImg1', 'myImg2') ){
+      alert('you lose')
+      document.getElementById('Img01', 'myImg3').style.left = '20px'
+      location = 't2a13-keydown.html' // go to your next level
+    }
+    if ( myHitOther('myImg1') ){
+      alert('you win')
+      document.getElementById('Img01', 'myImg04).style.left = '20px'
+      location = 't2a13-keydown.html' // go to your next level
+    }
+    if ( myHitOther('myImg1') ){
+      alert('its a draw')
+      document.getElementById('Img01').style.left = '20px'
+      location = 't2a13-keydown.html' // go to your next level
+    } // end of myCheckHit()
+
+    
 </script>
